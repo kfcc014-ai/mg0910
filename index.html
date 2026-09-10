@@ -78,6 +78,35 @@
       font-size: 15px;
     }
 
+    .game-link-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 18px;
+      min-height: 44px;
+      padding: 0 18px;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      border-radius: 10px;
+      background: #ffffff;
+      color: var(--mg-blue-dark);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 800;
+      transition: 0.18s ease;
+      box-shadow: 0 6px 16px rgba(0, 48, 92, 0.16);
+    }
+
+    .game-link-button:hover {
+      transform: translateY(-1px);
+      background: #f4f9fd;
+      box-shadow: 0 8px 20px rgba(0, 48, 92, 0.22);
+    }
+
+    .game-link-button:focus-visible {
+      outline: 3px solid rgba(255, 255, 255, 0.55);
+      outline-offset: 3px;
+    }
+
     .container {
       max-width: 1280px;
       margin: 0 auto;
@@ -503,6 +532,10 @@
         대출 조건과 상환 방식을 입력하여 예상 월 납입금과 전체 상환 스케줄을
         간편하게 확인하세요.
       </p>
+
+      <a class="game-link-button" href="worm_game.html">
+        MG 금고 지킴이 게임 하러가기
+      </a>
     </div>
   </header>
 
