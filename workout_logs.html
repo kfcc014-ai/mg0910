@@ -1,0 +1,993 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <title>Workout Log - 운동 기록</title>
+  <style>
+    :root {
+      --bg: #f5f7f6;
+      --surface: #ffffff;
+      --surface-2: #f0f3f1;
+      --text: #17201b;
+      --muted: #6f7973;
+      --line: #dfe5e1;
+      --primary: #17784d;
+      --primary-strong: #0f603c;
+      --primary-soft: #e5f3ec;
+      --danger: #b33a3a;
+      --danger-soft: #fff0f0;
+      --warning: #9a6b09;
+      --shadow: 0 14px 40px rgba(24, 46, 34, 0.08);
+      --radius: 20px;
+      --radius-sm: 12px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, Pretendard, "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 8% 0%, rgba(23,120,77,.08), transparent 32%),
+        var(--bg);
+      color: var(--text);
+    }
+
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .55; }
+
+    .app { width: min(1440px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 64px; }
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      margin-bottom: 22px;
+    }
+    .brand { display: flex; align-items: center; gap: 13px; }
+    .brand-mark {
+      width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center;
+      background: linear-gradient(145deg, var(--primary), var(--primary-strong)); color: white;
+      box-shadow: 0 10px 22px rgba(23,120,77,.22); font-size: 22px;
+    }
+    .brand h1 { margin: 0; font-size: clamp(22px, 3vw, 30px); letter-spacing: -.04em; }
+    .brand p { margin: 3px 0 0; color: var(--muted); font-size: 13px; }
+
+    .btn {
+      border: 0; border-radius: 12px; min-height: 42px; padding: 0 16px;
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      font-weight: 750; transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+    .btn:hover:not(:disabled) { transform: translateY(-1px); }
+    .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 8px 18px rgba(23,120,77,.18); }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-strong); }
+    .btn-soft { background: var(--surface-2); color: var(--text); border: 1px solid var(--line); }
+    .btn-danger { background: var(--danger-soft); color: var(--danger); border: 1px solid #ffd6d6; }
+    .btn-icon { width: 40px; min-width: 40px; padding: 0; }
+
+    .stats {
+      display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px; margin-bottom: 18px;
+    }
+    .stat {
+      background: var(--surface); border: 1px solid var(--line); border-radius: 17px; padding: 18px;
+      box-shadow: 0 8px 24px rgba(22,45,33,.04);
+    }
+    .stat-label { color: var(--muted); font-size: 13px; font-weight: 700; }
+    .stat-value { margin-top: 7px; font-size: 27px; font-weight: 850; letter-spacing: -.04em; }
+    .stat-unit { font-size: 13px; color: var(--muted); font-weight: 650; margin-left: 4px; }
+
+    .layout { display: grid; grid-template-columns: minmax(0,1.7fr) minmax(330px,.8fr); gap: 18px; align-items: start; }
+    .card {
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+    }
+    .card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 20px 20px 14px; }
+    .card-title { margin: 0; font-size: 18px; letter-spacing: -.03em; }
+    .card-sub { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+
+    .calendar-toolbar { display:flex; align-items:center; gap:8px; }
+    .month-label { min-width: 130px; text-align: center; font-weight: 850; font-size: 17px; }
+    .calendar-wrap { padding: 0 18px 20px; }
+    .weekdays, .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); }
+    .weekdays div { padding: 10px 6px; text-align:center; color: var(--muted); font-size: 12px; font-weight: 800; }
+    .weekdays div:first-child { color: #c74b4b; }
+    .weekdays div:last-child { color: #3e67aa; }
+    .calendar-grid { border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+    .day {
+      min-height: 132px; padding: 9px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+      background: #fff; position: relative; text-align: left; overflow: hidden; transition: background .12s ease;
+    }
+    .day:hover { background: #fafcfb; }
+    .day.outside { background: #fafbfa; color: #aeb6b1; }
+    .day.selected { background: var(--primary-soft); box-shadow: inset 0 0 0 2px var(--primary); }
+    .day.today .day-num { background: var(--primary); color: white; }
+    .day-num { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 850; }
+    .day-events { margin-top: 7px; display: grid; gap: 5px; }
+    .event-chip {
+      width: 100%; overflow: hidden; border-radius: 9px; padding: 6px 7px;
+      background: #f7faf8; border: 1px solid #dfe9e3;
+    }
+    .event-title {
+      display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+      font-size:11px; font-weight:850; color:var(--text); letter-spacing:-.01em;
+    }
+    .event-type-row { display:flex; flex-wrap:wrap; gap:3px; margin-top:4px; overflow:hidden; max-height:17px; }
+    .event-type-tag {
+      display:inline-flex; align-items:center; min-height:15px; padding:1px 5px; border-radius:999px;
+      background:#fff; border:1px solid #c8ddd0; color:var(--primary-strong); font-size:9px; font-weight:800;
+      line-height:1.2; white-space:nowrap;
+    }
+    .event-more { font-size: 10px; color: var(--muted); padding-left: 5px; font-weight: 700; }
+
+    .detail-panel { position: sticky; top: 18px; overflow: hidden; }
+    .detail-body { padding: 0 20px 20px; max-height: calc(100vh - 170px); overflow: auto; }
+    .selected-date { color: var(--primary); font-size: 13px; font-weight: 850; }
+    .empty {
+      border: 1px dashed #cdd6d0; border-radius: 15px; padding: 28px 18px; text-align:center; color: var(--muted);
+      background: #fbfcfb;
+    }
+    .empty-icon { font-size: 30px; margin-bottom: 8px; }
+    .workout-card { border: 1px solid var(--line); border-radius: 15px; padding: 15px; margin-top: 12px; }
+    .workout-card-head { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+    .workout-head-actions { display:flex; gap:7px; align-items:center; flex-shrink:0; }
+    .workout-title { font-size: 16px; font-weight: 850; margin:0; }
+    .type-badges { display:flex; flex-wrap:wrap; gap:5px; margin-top:7px; }
+    .type-badge {
+      display:inline-flex; align-items:center; padding:4px 8px; border-radius:999px;
+      background:#fff; border:1px solid #bad3c3; color:var(--primary-strong); font-size:11px; font-weight:800;
+    }
+    .notes { margin: 10px 0 0; color: var(--muted); font-size: 13px; line-height: 1.55; white-space: pre-wrap; }
+    .exercise { margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--line); }
+    .exercise-head { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+    .exercise-name { font-weight: 820; font-size: 14px; }
+    .exercise-actions { display:flex; gap:6px; flex-shrink:0; }
+    .btn-mini { min-height:32px; padding:0 10px; border-radius:9px; font-size:11px; }
+    .workout-actions { display:flex; flex-wrap:wrap; gap:7px; margin-top:12px; }
+    .set-list { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+    .set-pill { padding:6px 8px; border-radius:9px; background:var(--surface-2); font-size:11px; color:#49534d; font-weight:700; }
+    .volume { margin-top: 13px; padding-top: 11px; border-top: 1px dashed var(--line); color: var(--muted); font-size: 12px; font-weight: 700; }
+
+    .recent { margin-top: 18px; }
+    .recent-list { padding: 0 20px 20px; display:grid; gap:9px; }
+    .recent-item {
+      width:100%; display:flex; align-items:center; justify-content:space-between; gap:10px; text-align:left;
+      background:#fff; border:1px solid var(--line); border-radius:13px; padding:12px 13px;
+    }
+    .recent-item:hover { background:#fafcfb; }
+    .recent-main { min-width:0; }
+    .recent-title { font-weight:820; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+    .recent-date { color:var(--muted); font-size:11px; margin-top:3px; }
+    .recent-arrow { color:var(--muted); }
+
+    .body-part-picker { display:flex; flex-wrap:wrap; gap:7px; margin-top:2px; }
+    .body-part-option {
+      min-height:36px; padding:0 12px; border-radius:999px; border:1px solid var(--line);
+      background:#fff; color:#55625a; font:inherit; font-size:12px; font-weight:800; cursor:pointer;
+      transition:background .12s ease, border-color .12s ease, color .12s ease, transform .12s ease;
+    }
+    .body-part-option:hover { border-color:#a8c6b3; background:#f8fbf9; }
+    .body-part-option.active, .body-part-option[aria-pressed="true"] {
+      background:var(--primary-soft); border-color:#8fbea0; color:var(--primary-strong);
+    }
+    .body-part-option:active { transform:translateY(1px); }
+    .field-help { margin-top:7px; color:var(--muted); font-size:11px; line-height:1.45; }
+
+    dialog {
+      width: min(920px, calc(100% - 24px)); max-height: calc(100vh - 30px); padding:0; border:0; border-radius:22px;
+      box-shadow: 0 28px 90px rgba(0,0,0,.25); overflow:hidden;
+    }
+    dialog::backdrop { background: rgba(13,25,18,.52); backdrop-filter: blur(3px); }
+    .modal-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:20px 22px; border-bottom:1px solid var(--line); background:#fff; }
+    .modal-head h2 { margin:0; font-size:20px; }
+    .modal-body { padding:20px 22px 28px; overflow:auto; max-height: calc(100vh - 100px); background:#fafcfb; }
+    .form-grid { display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+    .field { display:grid; gap:7px; }
+    .field.full { grid-column:1 / -1; }
+    label { font-size:12px; font-weight:800; color:#4d5851; }
+    input, select, textarea {
+      width:100%; border:1px solid #d7ded9; background:#fff; color:var(--text); border-radius:11px; padding:11px 12px; outline:none;
+      transition:border .15s ease, box-shadow .15s ease;
+    }
+    input:focus, select:focus, textarea:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(23,120,77,.11); }
+    textarea { min-height:78px; resize:vertical; }
+    .form-section-title { margin:24px 0 10px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .form-section-title h3 { margin:0; font-size:16px; }
+    .exercise-editor { display:grid; gap:12px; }
+    .exercise-box { border:1px solid var(--line); border-radius:16px; background:#fff; overflow:hidden; }
+    .exercise-top { display:grid; grid-template-columns: 1fr auto; align-items:end; gap:10px; padding:14px; background:#fbfcfb; }
+    .sets { padding:0 14px 14px; }
+    .set-row { display:grid; grid-template-columns: 62px 1fr 1fr 42px; gap:8px; align-items:end; margin-top:9px; }
+    .set-no { align-self:center; font-size:12px; color:var(--muted); font-weight:800; padding-bottom:12px; }
+    .mini-label { display:block; margin-bottom:5px; font-size:10px; color:var(--muted); font-weight:750; }
+    .form-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:22px; padding-top:18px; border-top:1px solid var(--line); }
+
+    .toast-stack { position:fixed; right:18px; bottom:18px; z-index:100; display:grid; gap:9px; }
+    .toast { min-width:260px; max-width:390px; padding:13px 15px; border-radius:12px; color:white; background:#29342d; box-shadow:0 12px 34px rgba(0,0,0,.18); font-size:13px; font-weight:700; animation: toast-in .18s ease-out; }
+    .toast.error { background:#8d3333; }
+    @keyframes toast-in { from { transform:translateY(8px); opacity:0; } to { transform:none; opacity:1; } }
+
+    .loading-overlay { position:fixed; inset:0; z-index:90; display:none; place-items:center; background:rgba(245,247,246,.7); backdrop-filter:blur(2px); }
+    .loading-overlay.show { display:grid; }
+    .loader-card { background:#fff; border:1px solid var(--line); border-radius:16px; padding:18px 22px; box-shadow:var(--shadow); font-weight:800; }
+    .dot { display:inline-block; width:8px; height:8px; margin-right:8px; border-radius:50%; background:var(--primary); animation:pulse .8s alternate infinite; }
+    @keyframes pulse { to { transform:scale(.55); opacity:.45; } }
+
+    @media (max-width: 1050px) {
+      .layout { grid-template-columns:1fr; }
+      .detail-panel { position:static; }
+      .detail-body { max-height:none; }
+    }
+    @media (max-width: 760px) {
+      .app { width:min(100% - 20px, 1440px); padding-top:18px; }
+      .topbar { align-items:flex-start; }
+      .brand p { display:none; }
+      .stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .stat { padding:14px; }
+      .stat-value { font-size:23px; }
+      .card-head { padding:16px 14px 12px; flex-wrap:wrap; }
+      .calendar-wrap { padding:0 8px 12px; overflow-x:auto; }
+      .weekdays, .calendar-grid { min-width:680px; }
+      .day { min-height:98px; }
+      .form-grid { grid-template-columns:1fr; }
+      .field.full { grid-column:auto; }
+      .set-row { grid-template-columns:52px 1fr 1fr 38px; }
+      dialog { max-height:calc(100vh - 12px); }
+      .modal-head { padding:16px; }
+      .modal-body { padding:16px; }
+    }
+    @media (max-width: 480px) {
+      .brand-mark { width:40px; height:40px; }
+      .topbar .btn span.label { display:none; }
+      .stats { gap:8px; }
+      .stat { padding:12px; }
+      .stat-value { font-size:20px; }
+      .set-row { grid-template-columns:1fr 1fr 38px; }
+      .set-no { grid-column:1 / -1; padding:0; }
+      .form-actions { position:sticky; bottom:-28px; background:#fafcfb; padding-bottom:4px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">✓</div>
+        <div>
+          <h1>Workout Log</h1>
+          <p>운동 루틴과 세트 기록을 캘린더에서 관리하세요.</p>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="openAddBtn"><span>＋</span><span class="label">운동 기록</span></button>
+    </header>
+
+    <section class="stats" aria-label="운동 통계">
+      <article class="stat"><div class="stat-label">이번 달 운동</div><div class="stat-value" id="statDays">0<span class="stat-unit">일</span></div></article>
+      <article class="stat"><div class="stat-label">이번 달 세트</div><div class="stat-value" id="statSets">0<span class="stat-unit">세트</span></div></article>
+      <article class="stat"><div class="stat-label">이번 달 볼륨</div><div class="stat-value" id="statVolume">0<span class="stat-unit">kg</span></div></article>
+      <article class="stat"><div class="stat-label">전체 운동 기록</div><div class="stat-value" id="statLogs">0<span class="stat-unit">회</span></div></article>
+    </section>
+
+    <section class="layout">
+      <div>
+        <article class="card">
+          <div class="card-head">
+            <div>
+              <h2 class="card-title">운동 캘린더</h2>
+              <p class="card-sub">날짜를 누르면 해당 날짜의 운동을 확인할 수 있습니다.</p>
+            </div>
+            <div class="calendar-toolbar">
+              <button class="btn btn-soft btn-icon" id="prevMonthBtn" aria-label="이전 달">‹</button>
+              <div class="month-label" id="monthLabel"></div>
+              <button class="btn btn-soft btn-icon" id="nextMonthBtn" aria-label="다음 달">›</button>
+              <button class="btn btn-soft" id="todayBtn">오늘</button>
+            </div>
+          </div>
+          <div class="calendar-wrap">
+            <div class="weekdays" aria-hidden="true">
+              <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
+            </div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+          </div>
+        </article>
+
+        <article class="card recent">
+          <div class="card-head">
+            <div>
+              <h2 class="card-title">최근 운동</h2>
+              <p class="card-sub">가장 최근 기록 6개</p>
+            </div>
+          </div>
+          <div class="recent-list" id="recentList"></div>
+        </article>
+      </div>
+
+      <aside class="card detail-panel">
+        <div class="card-head">
+          <div>
+            <div class="selected-date" id="selectedDateLabel"></div>
+            <h2 class="card-title" style="margin-top:4px">운동 상세</h2>
+          </div>
+          <button class="btn btn-soft btn-icon" id="addForDayBtn" aria-label="선택 날짜에 운동 추가">＋</button>
+        </div>
+        <div class="detail-body" id="detailBody"></div>
+      </aside>
+    </section>
+  </main>
+
+  <dialog id="workoutDialog" aria-labelledby="dialogTitle">
+    <div class="modal-head">
+      <div>
+        <h2 id="dialogTitle">운동 기록 추가</h2>
+        <div class="card-sub" id="dialogSub">제목부터 세트까지 한 번에 기록합니다.</div>
+      </div>
+      <button class="btn btn-soft btn-icon" id="closeDialogBtn" type="button" aria-label="닫기">×</button>
+    </div>
+    <div class="modal-body">
+      <form id="workoutForm">
+        <div class="form-grid">
+          <div class="field">
+            <label for="workoutDate">날짜 *</label>
+            <input id="workoutDate" name="workoutDate" type="date" required />
+          </div>
+          <div class="field">
+            <label>운동 부위 * <span style="font-weight:650;color:var(--muted)">복수 선택 가능</span></label>
+            <div class="body-part-picker" id="bodyPartPicker" role="group" aria-label="운동 부위 복수 선택">
+              <button class="body-part-option" type="button" data-value="가슴" aria-pressed="false">가슴</button>
+              <button class="body-part-option" type="button" data-value="등" aria-pressed="false">등</button>
+              <button class="body-part-option" type="button" data-value="하체" aria-pressed="false">하체</button>
+              <button class="body-part-option" type="button" data-value="어깨" aria-pressed="false">어깨</button>
+              <button class="body-part-option" type="button" data-value="팔" aria-pressed="false">팔</button>
+              <button class="body-part-option" type="button" data-value="이두" aria-pressed="false">이두</button>
+              <button class="body-part-option" type="button" data-value="삼두" aria-pressed="false">삼두</button>
+              <button class="body-part-option" type="button" data-value="코어" aria-pressed="false">코어</button>
+              <button class="body-part-option" type="button" data-value="유산소" aria-pressed="false">유산소</button>
+              <button class="body-part-option" type="button" data-value="전신" aria-pressed="false">전신</button>
+              <button class="body-part-option" type="button" data-value="기타" aria-pressed="false">기타</button>
+            </div>
+            <input id="workoutType" name="workoutType" type="hidden" />
+            <div class="field-help">예: 가슴 + 어깨, 등 + 이두처럼 여러 부위를 함께 선택할 수 있습니다.</div>
+          </div>
+          <div class="field full">
+            <label for="workoutTitle">운동 제목 *</label>
+            <input id="workoutTitle" name="workoutTitle" type="text" maxlength="100" placeholder="예: 가슴 집중 루틴" required />
+          </div>
+          <div class="field full">
+            <label for="workoutNotes">메모</label>
+            <textarea id="workoutNotes" name="workoutNotes" maxlength="1000" placeholder="컨디션, 목표, 운동 후 느낌 등을 적어보세요."></textarea>
+          </div>
+        </div>
+
+        <div class="form-section-title">
+          <div>
+            <h3>세부 운동</h3>
+            <div class="card-sub">운동별로 세트, 횟수, 무게를 기록합니다.</div>
+          </div>
+          <button class="btn btn-soft" id="addExerciseBtn" type="button">＋ 운동 추가</button>
+        </div>
+        <div class="exercise-editor" id="exerciseEditor"></div>
+
+        <div class="form-actions">
+          <button class="btn btn-soft" id="cancelBtn" type="button">취소</button>
+          <button class="btn btn-primary" id="saveBtn" type="submit">운동 저장</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+
+  <div class="loading-overlay" id="loadingOverlay" aria-live="polite">
+    <div class="loader-card"><span class="dot"></span><span id="loadingText">데이터를 불러오는 중...</span></div>
+  </div>
+  <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+  <script>
+    'use strict';
+
+    // Supabase browser-safe configuration. Never put a secret/service_role key here.
+    const SUPABASE_URL = 'https://xrxnlyqpncpcmpfnuafr.supabase.co';
+    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_2g8_0-OVbgjn5jBMMAd7XQ_r43C2nLE';
+
+    const state = {
+      logs: [],
+      exercises: [],
+      sets: [],
+      viewDate: startOfMonth(new Date()),
+      selectedDate: localDateString(new Date())
+    };
+
+    const el = {
+      calendarGrid: document.getElementById('calendarGrid'),
+      monthLabel: document.getElementById('monthLabel'),
+      detailBody: document.getElementById('detailBody'),
+      selectedDateLabel: document.getElementById('selectedDateLabel'),
+      recentList: document.getElementById('recentList'),
+      dialog: document.getElementById('workoutDialog'),
+      form: document.getElementById('workoutForm'),
+      date: document.getElementById('workoutDate'),
+      type: document.getElementById('workoutType'),
+      bodyPartPicker: document.getElementById('bodyPartPicker'),
+      title: document.getElementById('workoutTitle'),
+      notes: document.getElementById('workoutNotes'),
+      exerciseEditor: document.getElementById('exerciseEditor'),
+      saveBtn: document.getElementById('saveBtn'),
+      loadingOverlay: document.getElementById('loadingOverlay'),
+      loadingText: document.getElementById('loadingText'),
+      toastStack: document.getElementById('toastStack'),
+      statDays: document.getElementById('statDays'),
+      statSets: document.getElementById('statSets'),
+      statVolume: document.getElementById('statVolume'),
+      statLogs: document.getElementById('statLogs'),
+      dialogTitle: document.getElementById('dialogTitle'),
+      dialogSub: document.getElementById('dialogSub')
+    };
+
+    const editorState = {
+      mode: 'add',
+      workoutId: null
+    };
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+    function localDateString(date) { return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`; }
+    function startOfMonth(date) { return new Date(date.getFullYear(), date.getMonth(), 1); }
+    function parseLocalDate(value) {
+      const [y,m,d] = value.split('-').map(Number);
+      return new Date(y, m-1, d);
+    }
+    function formatKoreanDate(value) {
+      const d = parseLocalDate(value);
+      const week = ['일','월','화','수','목','금','토'][d.getDay()];
+      return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${week})`;
+    }
+    function formatNumber(n, maxFractionDigits = 0) {
+      return Number(n || 0).toLocaleString('ko-KR', { maximumFractionDigits: maxFractionDigits });
+    }
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
+        .replaceAll('"','&quot;').replaceAll("'",'&#039;');
+    }
+    function parseWorkoutTypes(value) {
+      return [...new Set(String(value || '')
+        .split(/[,/+|·]+/)
+        .map(v => v.trim())
+        .filter(Boolean))];
+    }
+    function setWorkoutTypes(values) {
+      const selected = [...new Set((values || []).map(v => String(v).trim()).filter(Boolean))];
+      el.type.value = selected.join(', ');
+      el.bodyPartPicker.querySelectorAll('.body-part-option').forEach(btn => {
+        const active = selected.includes(btn.dataset.value);
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+    }
+    function workoutTypeTags(value, className = 'type-badge') {
+      const values = parseWorkoutTypes(value);
+      return values.map(type => `<span class="${className}">${escapeHtml(type)}</span>`).join('');
+    }
+    function toast(message, kind = 'ok') {
+      const node = document.createElement('div');
+      node.className = `toast${kind === 'error' ? ' error' : ''}`;
+      node.textContent = message;
+      el.toastStack.appendChild(node);
+      setTimeout(() => node.remove(), 3500);
+    }
+    function setLoading(show, text = '데이터를 불러오는 중...') {
+      el.loadingText.textContent = text;
+      el.loadingOverlay.classList.toggle('show', show);
+    }
+
+    async function api(path, { method = 'GET', body, prefer } = {}) {
+      const headers = {
+        'apikey': SUPABASE_PUBLISHABLE_KEY,
+        'Content-Type': 'application/json'
+      };
+      if (prefer) headers['Prefer'] = prefer;
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+        method,
+        headers,
+        body: body === undefined ? undefined : JSON.stringify(body)
+      });
+      if (!response.ok) {
+        let detail = '';
+        try {
+          const data = await response.json();
+          detail = data.message || data.details || JSON.stringify(data);
+        } catch (_) {
+          detail = await response.text();
+        }
+        throw new Error(`${response.status} ${response.statusText}${detail ? ` - ${detail}` : ''}`);
+      }
+      if (response.status === 204) return null;
+      const text = await response.text();
+      return text ? JSON.parse(text) : null;
+    }
+
+    async function loadData({ silent = false } = {}) {
+      if (!silent) setLoading(true);
+      try {
+        const [logs, exercises, sets] = await Promise.all([
+          api('workout_logs?select=*&order=workout_date.desc,created_at.desc'),
+          api('workout_exercises?select=*&order=sort_order.asc,id.asc'),
+          api('exercise_sets?select=*&order=set_number.asc,id.asc')
+        ]);
+        state.logs = logs || [];
+        state.exercises = exercises || [];
+        state.sets = sets || [];
+        renderAll();
+      } catch (error) {
+        console.error(error);
+        toast('DB 데이터를 불러오지 못했습니다: ' + error.message, 'error');
+        renderAll();
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    }
+
+    function logsForDate(dateStr) { return state.logs.filter(x => x.workout_date === dateStr); }
+    function exercisesForWorkout(workoutId) { return state.exercises.filter(x => Number(x.workout_id) === Number(workoutId)); }
+    function setsForExercise(exerciseId) { return state.sets.filter(x => Number(x.exercise_id) === Number(exerciseId)); }
+    function volumeForWorkout(workoutId) {
+      return exercisesForWorkout(workoutId).reduce((total, ex) =>
+        total + setsForExercise(ex.id).reduce((s, set) => s + Number(set.weight_kg || 0) * Number(set.reps || 0), 0), 0);
+    }
+
+    function renderAll() {
+      renderCalendar();
+      renderDetails();
+      renderRecent();
+      renderStats();
+    }
+
+    function renderCalendar() {
+      const y = state.viewDate.getFullYear();
+      const m = state.viewDate.getMonth();
+      el.monthLabel.textContent = `${y}년 ${m+1}월`;
+
+      const first = new Date(y, m, 1);
+      const gridStart = new Date(y, m, 1 - first.getDay());
+      const today = localDateString(new Date());
+      const parts = [];
+
+      for (let i = 0; i < 42; i++) {
+        const d = new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + i);
+        const key = localDateString(d);
+        const dayLogs = logsForDate(key);
+        const classes = ['day'];
+        if (d.getMonth() !== m) classes.push('outside');
+        if (key === state.selectedDate) classes.push('selected');
+        if (key === today) classes.push('today');
+        const chips = dayLogs.slice(0,2).map(log => `<div class="event-chip" title="${escapeHtml(log.title)} · ${escapeHtml(log.workout_type)}"><span class="event-title">${escapeHtml(log.title)}</span><span class="event-type-row">${workoutTypeTags(log.workout_type, 'event-type-tag')}</span></div>`).join('');
+        const more = dayLogs.length > 2 ? `<div class="event-more">+${dayLogs.length-2}개 더보기</div>` : '';
+        parts.push(`
+          <button type="button" class="${classes.join(' ')}" data-date="${key}" aria-label="${key} 운동 ${dayLogs.length}개">
+            <span class="day-num">${d.getDate()}</span>
+            <span class="day-events">${chips}${more}</span>
+          </button>`);
+      }
+      el.calendarGrid.innerHTML = parts.join('');
+      el.calendarGrid.querySelectorAll('.day').forEach(btn => btn.addEventListener('click', () => {
+        state.selectedDate = btn.dataset.date;
+        const selected = parseLocalDate(state.selectedDate);
+        if (selected.getMonth() !== state.viewDate.getMonth() || selected.getFullYear() !== state.viewDate.getFullYear()) {
+          state.viewDate = startOfMonth(selected);
+        }
+        renderCalendar();
+        renderDetails();
+      }));
+    }
+
+    function renderDetails() {
+      const logs = logsForDate(state.selectedDate);
+      el.selectedDateLabel.textContent = formatKoreanDate(state.selectedDate);
+      if (!logs.length) {
+        el.detailBody.innerHTML = `
+          <div class="empty">
+            <div class="empty-icon">🏋️</div>
+            <strong>아직 운동 기록이 없습니다.</strong>
+            <div style="margin-top:6px;font-size:12px">오른쪽 위 ＋ 버튼으로 이 날짜의 운동을 추가해보세요.</div>
+          </div>`;
+        return;
+      }
+      el.detailBody.innerHTML = logs.map(log => {
+        const exercises = exercisesForWorkout(log.id);
+        const exerciseHtml = exercises.length ? exercises.map(ex => {
+          const sets = setsForExercise(ex.id);
+          return `<div class="exercise">
+            <div class="exercise-head">
+              <div class="exercise-name">${escapeHtml(ex.exercise_name)}</div>
+            </div>
+            <div class="set-list">
+              ${sets.length ? sets.map(set => `<span class="set-pill">${set.set_number}세트 · ${formatNumber(set.weight_kg,2)}kg × ${formatNumber(set.reps)}회</span>`).join('') : '<span class="set-pill">세트 기록 없음</span>'}
+            </div>
+          </div>`;
+        }).join('') : '<div class="exercise"><span class="card-sub">세부 운동 없음</span></div>';
+        return `<section class="workout-card">
+          <div class="workout-card-head">
+            <div>
+              <h3 class="workout-title">${escapeHtml(log.title)}</h3>
+              <div class="type-badges">${workoutTypeTags(log.workout_type)}</div>
+            </div>
+            <div class="workout-head-actions">
+              <button class="btn btn-soft btn-icon edit-workout" type="button" data-id="${log.id}" title="운동 기록 전체 수정" aria-label="${escapeHtml(log.title)} 수정">✎</button>
+              <button class="btn btn-danger btn-icon delete-workout" type="button" data-id="${log.id}" title="운동 기록 삭제" aria-label="${escapeHtml(log.title)} 삭제">×</button>
+            </div>
+          </div>
+          ${log.notes ? `<p class="notes">${escapeHtml(log.notes)}</p>` : ''}
+          ${exerciseHtml}
+          <div class="volume">총 볼륨 ${formatNumber(volumeForWorkout(log.id), 1)} kg</div>
+        </section>`;
+      }).join('');
+
+      el.detailBody.querySelectorAll('.edit-workout').forEach(btn => {
+        btn.addEventListener('click', () => openEditDialog(Number(btn.dataset.id)));
+      });
+      el.detailBody.querySelectorAll('.delete-workout').forEach(btn => {
+        btn.addEventListener('click', () => deleteWorkout(Number(btn.dataset.id)));
+      });
+    }
+
+    function renderRecent() {
+      const recent = [...state.logs]
+        .sort((a,b) => b.workout_date.localeCompare(a.workout_date) || String(b.created_at).localeCompare(String(a.created_at)))
+        .slice(0,6);
+      if (!recent.length) {
+        el.recentList.innerHTML = '<div class="empty">첫 운동을 기록하면 여기에 최근 기록이 표시됩니다.</div>';
+        return;
+      }
+      el.recentList.innerHTML = recent.map(log => `
+        <button class="recent-item" type="button" data-date="${log.workout_date}">
+          <div class="recent-main">
+            <div class="recent-title">${escapeHtml(log.title)}</div>
+            <div class="type-badges" style="margin-top:5px">${workoutTypeTags(log.workout_type)}</div>
+            <div class="recent-date">${formatKoreanDate(log.workout_date)} · ${exercisesForWorkout(log.id).length}개 운동 · ${formatNumber(volumeForWorkout(log.id),1)}kg</div>
+          </div>
+          <span class="recent-arrow">›</span>
+        </button>`).join('');
+      el.recentList.querySelectorAll('.recent-item').forEach(btn => btn.addEventListener('click', () => {
+        state.selectedDate = btn.dataset.date;
+        state.viewDate = startOfMonth(parseLocalDate(state.selectedDate));
+        renderCalendar();
+        renderDetails();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }));
+    }
+
+    function renderStats() {
+      const y = state.viewDate.getFullYear();
+      const m = state.viewDate.getMonth();
+      const monthPrefix = `${y}-${pad(m+1)}-`;
+      const monthLogs = state.logs.filter(x => x.workout_date.startsWith(monthPrefix));
+      const monthIds = new Set(monthLogs.map(x => Number(x.id)));
+      const monthExerciseIds = new Set(state.exercises.filter(x => monthIds.has(Number(x.workout_id))).map(x => Number(x.id)));
+      const monthSets = state.sets.filter(x => monthExerciseIds.has(Number(x.exercise_id)));
+      const uniqueDays = new Set(monthLogs.map(x => x.workout_date)).size;
+      const volume = monthSets.reduce((sum,set) => sum + Number(set.weight_kg || 0) * Number(set.reps || 0), 0);
+
+      el.statDays.innerHTML = `${uniqueDays}<span class="stat-unit">일</span>`;
+      el.statSets.innerHTML = `${monthSets.length}<span class="stat-unit">세트</span>`;
+      el.statVolume.innerHTML = `${formatNumber(volume, 0)}<span class="stat-unit">kg</span>`;
+      el.statLogs.innerHTML = `${state.logs.length}<span class="stat-unit">회</span>`;
+    }
+
+    let exerciseCounter = 0;
+    function addExercise(initial = {}) {
+      exerciseCounter += 1;
+      const id = `exercise-${exerciseCounter}`;
+      const box = document.createElement('section');
+      box.className = 'exercise-box';
+      box.dataset.exerciseBox = id;
+      if (initial.id != null) box.dataset.exerciseId = String(initial.id);
+      box.innerHTML = `
+        <div class="exercise-top">
+          <div class="field">
+            <label>운동명 *</label>
+            <input class="exercise-name-input" maxlength="100" placeholder="예: 벤치프레스" value="${escapeHtml(initial.name || '')}" required />
+          </div>
+          <button class="btn btn-danger btn-icon remove-exercise" type="button" title="운동 삭제">×</button>
+        </div>
+        <div class="sets">
+          <div class="sets-container"></div>
+          <button class="btn btn-soft add-set" type="button" style="margin-top:10px">＋ 세트 추가</button>
+        </div>`;
+      el.exerciseEditor.appendChild(box);
+
+      const container = box.querySelector('.sets-container');
+      const initialSets = initial.sets?.length ? initial.sets : [{reps:10,weight:0},{reps:10,weight:0},{reps:10,weight:0}];
+      initialSets.forEach(set => addSet(container, set));
+      box.querySelector('.add-set').addEventListener('click', () => addSet(container));
+      box.querySelector('.remove-exercise').addEventListener('click', () => {
+        if (el.exerciseEditor.children.length <= 1) {
+          toast('세부 운동은 최소 1개가 필요합니다.', 'error');
+          return;
+        }
+        box.remove();
+        renumberAllSets();
+      });
+    }
+
+    function addSet(container, initial = {}) {
+      const row = document.createElement('div');
+      row.className = 'set-row';
+      row.innerHTML = `
+        <div class="set-no"></div>
+        <div><span class="mini-label">횟수</span><input class="set-reps" type="number" inputmode="numeric" min="0" max="1000" step="1" value="${initial.reps ?? 10}" required /></div>
+        <div><span class="mini-label">무게(kg)</span><input class="set-weight" type="number" inputmode="decimal" min="0" max="99999" step="0.5" value="${initial.weight ?? 0}" required /></div>
+        <button class="btn btn-danger btn-icon remove-set" type="button" title="세트 삭제">×</button>`;
+      container.appendChild(row);
+      row.querySelector('.remove-set').addEventListener('click', () => {
+        if (container.children.length <= 1) {
+          toast('운동당 세트는 최소 1개가 필요합니다.', 'error');
+          return;
+        }
+        row.remove();
+        renumberSets(container);
+      });
+      renumberSets(container);
+    }
+
+    function renumberSets(container) {
+      [...container.querySelectorAll('.set-row')].forEach((row,index) => {
+        row.querySelector('.set-no').textContent = `${index+1}세트`;
+      });
+    }
+    function renumberAllSets() {
+      el.exerciseEditor.querySelectorAll('.sets-container').forEach(renumberSets);
+    }
+
+    function resetEditor() {
+      el.form.reset();
+      setWorkoutTypes([]);
+      el.exerciseEditor.innerHTML = '';
+      editorState.mode = 'add';
+      editorState.workoutId = null;
+    }
+
+    function openDialog(date = state.selectedDate) {
+      resetEditor();
+      editorState.mode = 'add';
+      el.dialogTitle.textContent = '운동 기록 추가';
+      el.dialogSub.textContent = '제목부터 세부 운동과 세트까지 한 번에 기록합니다.';
+      el.saveBtn.textContent = '운동 저장';
+      el.date.value = date || localDateString(new Date());
+      addExercise();
+      el.dialog.showModal();
+      setTimeout(() => el.title.focus(), 60);
+    }
+
+    function openEditDialog(workoutId) {
+      const workout = state.logs.find(x => Number(x.id) === Number(workoutId));
+      if (!workout) return;
+
+      resetEditor();
+      editorState.mode = 'edit';
+      editorState.workoutId = Number(workoutId);
+      el.dialogTitle.textContent = '운동 기록 전체 수정';
+      el.dialogSub.textContent = '기록 정보와 세부 운동, 세트까지 한 화면에서 수정할 수 있습니다.';
+      el.saveBtn.textContent = '변경사항 저장';
+      el.date.value = workout.workout_date || '';
+      setWorkoutTypes(parseWorkoutTypes(workout.workout_type));
+      el.title.value = workout.title || '';
+      el.notes.value = workout.notes || '';
+
+      const exercises = exercisesForWorkout(workoutId);
+      if (exercises.length) {
+        exercises.forEach(ex => {
+          const sets = setsForExercise(ex.id);
+          addExercise({
+            id: ex.id,
+            name: ex.exercise_name,
+            sets: sets.length
+              ? sets.map(set => ({ reps: set.reps, weight: set.weight_kg }))
+              : [{ reps: 10, weight: 0 }]
+          });
+        });
+      } else {
+        addExercise();
+      }
+
+      el.dialog.showModal();
+      setTimeout(() => el.title.focus(), 60);
+    }
+
+    function closeDialog() {
+      if (el.dialog.open) el.dialog.close();
+      resetEditor();
+    }
+
+    function collectWorkoutForm() {
+      const date = el.date.value;
+      const title = el.title.value.trim();
+      const workoutTypes = parseWorkoutTypes(el.type.value);
+      const workoutType = workoutTypes.join(', ');
+      const notes = el.notes.value.trim();
+      if (!date || !title || !workoutTypes.length) throw new Error('날짜, 제목, 운동 부위를 하나 이상 선택해주세요.');
+
+      const exercises = [...el.exerciseEditor.querySelectorAll('.exercise-box')].map((box, exIndex) => {
+        const name = box.querySelector('.exercise-name-input').value.trim();
+        if (!name) throw new Error(`${exIndex+1}번째 운동명을 입력해주세요.`);
+        const sets = [...box.querySelectorAll('.set-row')].map((row, setIndex) => {
+          const reps = Number(row.querySelector('.set-reps').value);
+          const weight = Number(row.querySelector('.set-weight').value);
+          if (!Number.isFinite(reps) || reps < 0 || !Number.isInteger(reps)) throw new Error(`${name} ${setIndex+1}세트 횟수를 확인해주세요.`);
+          if (!Number.isFinite(weight) || weight < 0) throw new Error(`${name} ${setIndex+1}세트 무게를 확인해주세요.`);
+          return { set_number: setIndex+1, reps, weight_kg: weight };
+        });
+        return {
+          id: box.dataset.exerciseId ? Number(box.dataset.exerciseId) : null,
+          exercise_name: name,
+          sort_order: exIndex+1,
+          sets
+        };
+      });
+      if (!exercises.length) throw new Error('세부 운동을 1개 이상 추가해주세요.');
+      return { date, title, workoutType, notes, exercises };
+    }
+
+    async function createWorkout(data) {
+      let workoutId = null;
+      try {
+        const inserted = await api('workout_logs', {
+          method: 'POST',
+          body: { workout_date: data.date, title: data.title, workout_type: data.workoutType, notes: data.notes || null },
+          prefer: 'return=representation'
+        });
+        workoutId = inserted?.[0]?.id;
+        if (!workoutId) throw new Error('운동일지 ID를 확인할 수 없습니다.');
+
+        for (const ex of data.exercises) {
+          const insertedEx = await api('workout_exercises', {
+            method: 'POST',
+            body: { workout_id: workoutId, exercise_name: ex.exercise_name, sort_order: ex.sort_order },
+            prefer: 'return=representation'
+          });
+          const exerciseId = insertedEx?.[0]?.id;
+          if (!exerciseId) throw new Error(`${ex.exercise_name} 저장 ID를 확인할 수 없습니다.`);
+          await api('exercise_sets', {
+            method: 'POST',
+            body: ex.sets.map(set => ({ ...set, exercise_id: exerciseId })),
+            prefer: 'return=minimal'
+          });
+        }
+        return workoutId;
+      } catch (error) {
+        if (workoutId) {
+          try { await api(`workout_logs?id=eq.${encodeURIComponent(workoutId)}`, { method: 'DELETE' }); } catch (_) {}
+        }
+        throw error;
+      }
+    }
+
+    async function updateWorkout(workoutId, data) {
+      await api(`workout_logs?id=eq.${encodeURIComponent(workoutId)}`, {
+        method: 'PATCH',
+        body: {
+          workout_date: data.date,
+          title: data.title,
+          workout_type: data.workoutType,
+          notes: data.notes || null
+        },
+        prefer: 'return=minimal'
+      });
+
+      const existingExercises = exercisesForWorkout(workoutId);
+      const existingIds = new Set(existingExercises.map(ex => Number(ex.id)));
+      const keptIds = new Set(data.exercises.filter(ex => ex.id).map(ex => Number(ex.id)));
+
+      for (const ex of data.exercises) {
+        let exerciseId = ex.id;
+        if (exerciseId && existingIds.has(Number(exerciseId))) {
+          await api(`workout_exercises?id=eq.${encodeURIComponent(exerciseId)}`, {
+            method: 'PATCH',
+            body: { exercise_name: ex.exercise_name, sort_order: ex.sort_order },
+            prefer: 'return=minimal'
+          });
+          await api(`exercise_sets?exercise_id=eq.${encodeURIComponent(exerciseId)}`, { method: 'DELETE' });
+        } else {
+          const inserted = await api('workout_exercises', {
+            method: 'POST',
+            body: { workout_id: workoutId, exercise_name: ex.exercise_name, sort_order: ex.sort_order },
+            prefer: 'return=representation'
+          });
+          exerciseId = inserted?.[0]?.id;
+          if (!exerciseId) throw new Error(`${ex.exercise_name} 저장 ID를 확인할 수 없습니다.`);
+        }
+
+        await api('exercise_sets', {
+          method: 'POST',
+          body: ex.sets.map(set => ({ ...set, exercise_id: exerciseId })),
+          prefer: 'return=minimal'
+        });
+      }
+
+      const removedIds = [...existingIds].filter(id => !keptIds.has(id));
+      for (const id of removedIds) {
+        await api(`workout_exercises?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
+      }
+    }
+
+    async function saveWorkout(event) {
+      event.preventDefault();
+      try {
+        const data = collectWorkoutForm();
+        const isEdit = editorState.mode === 'edit' && editorState.workoutId;
+        const workoutId = editorState.workoutId;
+        el.saveBtn.disabled = true;
+        setLoading(true, isEdit ? '운동 기록 전체를 수정하는 중...' : '운동 기록을 저장하는 중...');
+
+        if (isEdit) {
+          await updateWorkout(workoutId, data);
+        } else {
+          await createWorkout(data);
+        }
+
+        state.selectedDate = data.date;
+        state.viewDate = startOfMonth(parseLocalDate(data.date));
+        if (el.dialog.open) el.dialog.close();
+        resetEditor();
+        await loadData({ silent: true });
+        toast(isEdit ? '운동 기록 전체를 수정했습니다.' : '운동 기록을 저장했습니다.');
+      } catch (error) {
+        console.error(error);
+        toast((editorState.mode === 'edit' ? '수정 중 오류가 발생했습니다: ' : '저장 중 오류가 발생했습니다: ') + (error.message || ''), 'error');
+        if (editorState.mode === 'edit') await loadData({ silent: true });
+      } finally {
+        el.saveBtn.disabled = false;
+        setLoading(false);
+      }
+    }
+
+    async function deleteWorkout(id) {
+      const log = state.logs.find(x => Number(x.id) === Number(id));
+      if (!log) return;
+      if (!confirm(`“${log.title}” 운동 기록을 삭제할까요?\n세부 운동과 세트 기록도 함께 삭제됩니다.`)) return;
+      setLoading(true, '운동 기록을 삭제하는 중...');
+      try {
+        await api(`workout_logs?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
+        await loadData({ silent: true });
+        toast('운동 기록을 삭제했습니다.');
+      } catch (error) {
+        console.error(error);
+        toast('삭제하지 못했습니다: ' + error.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    document.getElementById('prevMonthBtn').addEventListener('click', () => {
+      state.viewDate = new Date(state.viewDate.getFullYear(), state.viewDate.getMonth()-1, 1);
+      renderCalendar(); renderStats();
+    });
+    document.getElementById('nextMonthBtn').addEventListener('click', () => {
+      state.viewDate = new Date(state.viewDate.getFullYear(), state.viewDate.getMonth()+1, 1);
+      renderCalendar(); renderStats();
+    });
+    document.getElementById('todayBtn').addEventListener('click', () => {
+      const now = new Date();
+      state.viewDate = startOfMonth(now);
+      state.selectedDate = localDateString(now);
+      renderAll();
+    });
+    document.getElementById('openAddBtn').addEventListener('click', () => openDialog(state.selectedDate));
+    document.getElementById('addForDayBtn').addEventListener('click', () => openDialog(state.selectedDate));
+    document.getElementById('closeDialogBtn').addEventListener('click', closeDialog);
+    document.getElementById('cancelBtn').addEventListener('click', closeDialog);
+    document.getElementById('addExerciseBtn').addEventListener('click', () => addExercise());
+    el.bodyPartPicker.querySelectorAll('.body-part-option').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const selected = new Set(parseWorkoutTypes(el.type.value));
+        if (selected.has(btn.dataset.value)) selected.delete(btn.dataset.value);
+        else selected.add(btn.dataset.value);
+        setWorkoutTypes([...selected]);
+      });
+    });
+    el.form.addEventListener('submit', saveWorkout);
+    el.dialog.addEventListener('click', (event) => {
+      if (event.target === el.dialog) closeDialog();
+    });
+
+    renderAll();
+    loadData();
+  </script>
+</body>
+</html>
