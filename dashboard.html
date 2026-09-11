@@ -15,12 +15,35 @@
     .donut-wrap{display:flex;align-items:center;justify-content:center;gap:28px;min-height:195px}.donut{width:150px;height:150px;border-radius:50%;position:relative;background:conic-gradient(var(--green) 0 33%,var(--red) 33% 66%,#8ea2b2 66%)}.donut:after{content:"대출 상태";position:absolute;inset:29px;background:white;border-radius:50%;display:grid;place-items:center;font-size:.82rem;font-weight:700}.legend{display:grid;gap:9px}.legend div{display:flex;align-items:center;gap:8px;font-size:.86rem}.swatch{width:10px;height:10px;border-radius:3px}
     .table-panel{margin-top:14px}.table-head{display:flex;justify-content:space-between;align-items:center;gap:12px}.search{width:min(310px,48vw);border:1px solid var(--line);border-radius:9px;padding:9px 12px;font:inherit}.table-wrap{overflow:auto;max-height:340px}table{width:100%;border-collapse:collapse;font-size:.88rem}th,td{padding:11px 10px;border-bottom:1px solid #edf1f4;text-align:left;white-space:nowrap}th{position:sticky;top:0;background:#fff;color:var(--muted);font-size:.78rem}td.num{text-align:right;font-variant-numeric:tabular-nums}.badge{display:inline-block;padding:3px 8px;border-radius:99px;background:#e9f8f3;color:#087b60;font-weight:700;font-size:.76rem}.badge.bad{background:#fff0f0;color:#b4232a}.empty{padding:42px;text-align:center;color:var(--muted)}.error{background:#fff4e5;color:#8b4b00;border:1px solid #ffd8a8;border-radius:10px;padding:12px;margin-bottom:14px;display:none}
     .skeleton{color:transparent;background:linear-gradient(90deg,#edf1f4,#f8fafb,#edf1f4);background-size:200% 100%;animation:shimmer 1.1s infinite;border-radius:5px}@keyframes shimmer{to{background-position:-200% 0}}
-    @media(max-width:760px){header{padding:17px 18px}main{padding:15px}.cards{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}.brand{align-items:flex-start}.toolbar{align-items:flex-start}.bar-row{grid-template-columns:76px 1fr 68px}.donut-wrap{gap:18px}.table-head{align-items:flex-start;flex-direction:column}.search{width:100%}}
+
+    .conn-panel{background:#fff;border:1px solid var(--line);border-radius:13px;padding:16px 18px;margin-bottom:16px;box-shadow:0 3px 12px rgba(22,43,59,.04)}
+    .conn-grid{display:grid;grid-template-columns:1.2fr 1.2fr auto auto;gap:10px;align-items:end}
+    .field{display:grid;gap:6px}.field label{font-size:.78rem;color:var(--muted);font-weight:700}
+    .field input{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font:inherit;background:#fff;color:var(--ink)}
+    .field input:focus{outline:2px solid rgba(22,119,255,.14);border-color:var(--blue)}
+    .btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}.btn.danger{color:var(--red)}
+    .conn-help{margin-top:9px;color:var(--muted);font-size:.78rem}
+    @media(max-width:760px){header{padding:17px 18px}main{padding:15px}.cards{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}.brand{align-items:flex-start}.toolbar{align-items:flex-start}.bar-row{grid-template-columns:76px 1fr 68px}.donut-wrap{gap:18px}.table-head{align-items:flex-start;flex-direction:column}.search{width:100%}.conn-grid{grid-template-columns:1fr}.conn-grid .btn{width:100%}}
   </style>
 </head>
 <body>
   <header><div class="inner brand"><h1>MG 금융 데이터 대시보드</h1><div class="status"><span class="dot"></span><span id="statusText">DB 연결 중</span></div></div></header>
   <main>
+    <section class="conn-panel" aria-label="Supabase 연결 설정">
+      <div class="conn-grid">
+        <div class="field">
+          <label for="supabaseUrl">Supabase URL</label>
+          <input id="supabaseUrl" type="url" autocomplete="off" placeholder="https://your-project.supabase.co">
+        </div>
+        <div class="field">
+          <label for="supabaseKey">Supabase Key</label>
+          <input id="supabaseKey" type="password" autocomplete="off" placeholder="Publishable / anon key">
+        </div>
+        <button class="btn primary" id="connectBtn" type="button">연결</button>
+        <button class="btn danger" id="disconnectBtn" type="button">연결 해제</button>
+      </div>
+      <div class="conn-help">입력값은 현재 탭의 세션에만 보관됩니다. 브라우저를 닫으면 사라집니다. Service Role Key는 입력하지 마세요.</div>
+    </section>
     <div class="toolbar"><p id="updated">데이터를 불러오고 있습니다.</p><button class="btn" id="refresh">새로고침</button></div>
     <div class="error" id="errorBox"></div>
     <section class="cards" aria-label="핵심 현황">
@@ -39,33 +62,179 @@
     </section>
   </main>
   <script>
-    const API='https://xrxnlyqpncpcmpfnuafr.supabase.co/rest/v1';
-    const KEY='sb_publishable_2g8_0-OVbgjn5jBMMAd7XQ_r43C2nLE';
-    const headers={apikey:KEY,Authorization:`Bearer ${KEY}`};
+    let API='';
+    let KEY='';
+    let headers={};
+    let accounts=[];
+
     const money=n=>new Intl.NumberFormat('ko-KR',{notation:n>=1e8?'compact':'standard',maximumFractionDigits:1}).format(n)+'원';
     const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-    let accounts=[];
-    async function get(path){const r=await fetch(`${API}/${path}`,{headers});if(!r.ok)throw new Error(`데이터 조회 실패 (${r.status})`);return r.json()}
-    function set(id,text){const el=document.getElementById(id);el.textContent=text;el.classList.remove('skeleton')}
-    function renderAccounts(q=''){
-      const term=q.trim().toLowerCase();const rows=accounts.filter(a=>`${a.account_type} ${a.branches?.branch_name}`.toLowerCase().includes(term)).slice(0,30);
-      document.getElementById('accountRows').innerHTML=rows.length?rows.map(a=>`<tr><td>${esc(a.account_id)}</td><td>${esc(a.branches?.branch_name||'-')}</td><td><span class="badge">${esc(a.account_type)}</span></td><td>${esc(a.open_date)}</td><td class="num">${money(+a.balance)}</td><td class="num">${Number(a.interest_rate).toFixed(2)}%</td></tr>`).join(''):'<tr><td colspan="6" class="empty">검색 결과가 없습니다.</td></tr>';
+
+    function normalizeApiUrl(input){
+      let url=(input||'').trim().replace(/\/+$/,'');
+      if(!url) throw new Error('Supabase URL을 입력해 주세요.');
+      if(!/^https:\/\/[a-z0-9-]+\.supabase\.co(?:\/rest\/v1)?$/i.test(url)){
+        throw new Error('Supabase URL 형식을 확인해 주세요.');
+      }
+      if(!/\/rest\/v1$/i.test(url)) url += '/rest/v1';
+      return url;
     }
+
+    function applyConnection(url,key){
+      API=normalizeApiUrl(url);
+      KEY=(key||'').trim();
+      if(!KEY) throw new Error('Supabase Key를 입력해 주세요.');
+      headers={apikey:KEY,Authorization:`Bearer ${KEY}`};
+      sessionStorage.setItem('mg_supabase_url', url.trim());
+      sessionStorage.setItem('mg_supabase_key', KEY);
+    }
+
+    function clearConnection(){
+      API=''; KEY=''; headers={}; accounts=[];
+      sessionStorage.removeItem('mg_supabase_url');
+      sessionStorage.removeItem('mg_supabase_key');
+      document.getElementById('supabaseUrl').value='';
+      document.getElementById('supabaseKey').value='';
+      document.getElementById('statusText').textContent='DB 연결 안 됨';
+      document.getElementById('updated').textContent='Supabase URL과 Key를 입력한 뒤 연결해 주세요.';
+      document.getElementById('accountRows').innerHTML='<tr><td colspan="6" class="empty">DB 연결 후 데이터가 표시됩니다.</td></tr>';
+      document.getElementById('branchBars').innerHTML='<div class="empty">DB 연결 후 데이터가 표시됩니다.</div>';
+      document.getElementById('loanLegend').innerHTML='';
+      document.getElementById('loanDonut').style.background='#edf2f5';
+      ['members','deposits','loans','overdue'].forEach(id=>{
+        const el=document.getElementById(id);
+        el.textContent='-';
+        el.classList.remove('skeleton');
+      });
+      document.getElementById('errorBox').style.display='none';
+    }
+
+    async function get(path){
+      if(!API || !KEY) throw new Error('먼저 Supabase 연결 정보를 입력해 주세요.');
+      const r=await fetch(`${API}/${path}`,{headers});
+      if(!r.ok){
+        let detail='';
+        try{
+          const body=await r.json();
+          detail=body?.message ? ` · ${body.message}` : '';
+        }catch(_){}
+        throw new Error(`데이터 조회 실패 (${r.status})${detail}`);
+      }
+      return r.json();
+    }
+
+    function set(id,text){
+      const el=document.getElementById(id);
+      el.textContent=text;
+      el.classList.remove('skeleton');
+    }
+
+    function renderAccounts(q=''){
+      const term=q.trim().toLowerCase();
+      const rows=accounts
+        .filter(a=>`${a.account_type} ${a.branches?.branch_name}`.toLowerCase().includes(term))
+        .slice(0,30);
+      document.getElementById('accountRows').innerHTML=rows.length
+        ? rows.map(a=>`<tr><td>${esc(a.account_id)}</td><td>${esc(a.branches?.branch_name||'-')}</td><td><span class="badge">${esc(a.account_type)}</span></td><td>${esc(a.open_date)}</td><td class="num">${money(+a.balance)}</td><td class="num">${Number(a.interest_rate).toFixed(2)}%</td></tr>`).join('')
+        : '<tr><td colspan="6" class="empty">검색 결과가 없습니다.</td></tr>';
+    }
+
     async function load(){
-      const error=document.getElementById('errorBox');error.style.display='none';document.getElementById('statusText').textContent='DB 연결 중';
+      const error=document.getElementById('errorBox');
+      error.style.display='none';
+
+      if(!API || !KEY){
+        clearConnection();
+        return;
+      }
+
+      document.getElementById('statusText').textContent='DB 연결 중';
       try{
         const [members,deposits,loans,branches]=await Promise.all([
-          get('members?select=member_id'),get('deposit_accounts?select=account_id,branch_id,account_type,open_date,balance,interest_rate,branches(branch_name)&order=balance.desc'),get('loans?select=loan_amount,status'),get('branches?select=branch_id,branch_name')
+          get('members?select=member_id'),
+          get('deposit_accounts?select=account_id,branch_id,account_type,open_date,balance,interest_rate,branches(branch_name)&order=balance.desc'),
+          get('loans?select=loan_amount,status'),
+          get('branches?select=branch_id,branch_name')
         ]);
-        accounts=deposits;const depositTotal=deposits.reduce((s,a)=>s+(+a.balance||0),0);const activeLoans=loans.filter(l=>l.status!=='완제');const loanTotal=activeLoans.reduce((s,l)=>s+(+l.loan_amount||0),0);const overdue=loans.filter(l=>l.status==='연체').length;
-        set('members',members.length.toLocaleString()+'명');set('deposits',money(depositTotal));set('loans',money(loanTotal));set('overdue',overdue.toLocaleString()+'건');
-        const sums=branches.map(b=>({name:b.branch_name,value:deposits.filter(a=>a.branch_id===b.branch_id).reduce((s,a)=>s+(+a.balance||0),0)})).sort((a,b)=>b.value-a.value);const max=Math.max(...sums.map(x=>x.value),1);
+
+        accounts=deposits;
+        const depositTotal=deposits.reduce((s,a)=>s+(+a.balance||0),0);
+        const activeLoans=loans.filter(l=>l.status!=='완제');
+        const loanTotal=activeLoans.reduce((s,l)=>s+(+l.loan_amount||0),0);
+        const overdue=loans.filter(l=>l.status==='연체').length;
+
+        set('members',members.length.toLocaleString()+'명');
+        set('deposits',money(depositTotal));
+        set('loans',money(loanTotal));
+        set('overdue',overdue.toLocaleString()+'건');
+
+        const sums=branches
+          .map(b=>({
+            name:b.branch_name,
+            value:deposits.filter(a=>a.branch_id===b.branch_id).reduce((s,a)=>s+(+a.balance||0),0)
+          }))
+          .sort((a,b)=>b.value-a.value);
+        const max=Math.max(...sums.map(x=>x.value),1);
+
         document.getElementById('branchBars').innerHTML=sums.map(x=>`<div class="bar-row"><span>${esc(x.name)}</span><div class="track"><div class="fill" style="width:${x.value/max*100}%"></div></div><span class="bar-value">${money(x.value)}</span></div>`).join('');
-        const colors={정상:'#00a67d',연체:'#e5484d',완제:'#8ea2b2'};const counts={};loans.forEach(l=>counts[l.status]=(counts[l.status]||0)+1);let cursor=0;const total=Math.max(loans.length,1);const stops=Object.entries(counts).map(([k,v])=>{const start=cursor;cursor+=v/total*100;return `${colors[k]||'#1677ff'} ${start}% ${cursor}%`});document.getElementById('loanDonut').style.background=`conic-gradient(${stops.join(',')})`;document.getElementById('loanLegend').innerHTML=Object.entries(counts).map(([k,v])=>`<div><span class="swatch" style="background:${colors[k]||'#1677ff'}"></span><span>${esc(k)} <strong>${v}건</strong></span></div>`).join('');
-        renderAccounts(document.getElementById('search').value);document.getElementById('statusText').textContent='DB 연결됨';document.getElementById('updated').textContent=`최근 갱신 ${new Date().toLocaleString('ko-KR')}`;
-      }catch(e){error.textContent=e.message+' · 데이터 접근 권한을 확인해 주세요.';error.style.display='block';document.getElementById('statusText').textContent='연결 확인 필요'}
+
+        const colors={정상:'#00a67d',연체:'#e5484d',완제:'#8ea2b2'};
+        const counts={};
+        loans.forEach(l=>counts[l.status]=(counts[l.status]||0)+1);
+        let cursor=0;
+        const total=Math.max(loans.length,1);
+        const stops=Object.entries(counts).map(([k,v])=>{
+          const start=cursor;
+          cursor+=v/total*100;
+          return `${colors[k]||'#1677ff'} ${start}% ${cursor}%`;
+        });
+
+        document.getElementById('loanDonut').style.background=stops.length?`conic-gradient(${stops.join(',')})`:'#edf2f5';
+        document.getElementById('loanLegend').innerHTML=Object.entries(counts).map(([k,v])=>`<div><span class="swatch" style="background:${colors[k]||'#1677ff'}"></span><span>${esc(k)} <strong>${v}건</strong></span></div>`).join('');
+
+        renderAccounts(document.getElementById('search').value);
+        document.getElementById('statusText').textContent='DB 연결됨';
+        document.getElementById('updated').textContent=`최근 갱신 ${new Date().toLocaleString('ko-KR')}`;
+      }catch(e){
+        error.textContent=e.message+' · URL, Key, RLS/권한 설정을 확인해 주세요.';
+        error.style.display='block';
+        document.getElementById('statusText').textContent='연결 확인 필요';
+      }
     }
-    document.getElementById('refresh').addEventListener('click',load);document.getElementById('search').addEventListener('input',e=>renderAccounts(e.target.value));load();
+
+    document.getElementById('connectBtn').addEventListener('click',async()=>{
+      const error=document.getElementById('errorBox');
+      try{
+        applyConnection(
+          document.getElementById('supabaseUrl').value,
+          document.getElementById('supabaseKey').value
+        );
+        await load();
+      }catch(e){
+        error.textContent=e.message;
+        error.style.display='block';
+        document.getElementById('statusText').textContent='연결 안 됨';
+      }
+    });
+
+    document.getElementById('disconnectBtn').addEventListener('click',clearConnection);
+    document.getElementById('refresh').addEventListener('click',load);
+    document.getElementById('search').addEventListener('input',e=>renderAccounts(e.target.value));
+
+    const savedUrl=sessionStorage.getItem('mg_supabase_url')||'';
+    const savedKey=sessionStorage.getItem('mg_supabase_key')||'';
+    if(savedUrl && savedKey){
+      document.getElementById('supabaseUrl').value=savedUrl;
+      document.getElementById('supabaseKey').value=savedKey;
+      try{
+        applyConnection(savedUrl,savedKey);
+        load();
+      }catch(_){
+        clearConnection();
+      }
+    }else{
+      clearConnection();
+    }
   </script>
 </body>
 </html>
