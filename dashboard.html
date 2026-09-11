@@ -3,238 +3,82 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>MG 금융 데이터 대시보드</title>
-  <meta name="description" content="지점·예금·대출 현황을 빠르게 확인하는 간단한 대시보드">
+  <title>MG 금융 데이터 CRUD 대시보드</title>
   <style>
     :root{--navy:#102a43;--blue:#1677ff;--green:#00a67d;--red:#e5484d;--ink:#172b3a;--muted:#637789;--line:#dce5eb;--bg:#f4f7f9;--card:#fff}
-    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Noto Sans KR",sans-serif}
-    header{background:var(--navy);color:#fff;padding:20px 24px} header .inner,main{max-width:1180px;margin:auto}.brand{display:flex;align-items:center;justify-content:space-between;gap:16px}.brand h1{font-size:1.35rem;margin:0}.status{font-size:.86rem;color:#c9e2f2;display:flex;align-items:center;gap:7px}.dot{width:8px;height:8px;border-radius:50%;background:#5de1b8}
-    main{padding:22px}.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}.toolbar p{margin:0;color:var(--muted);font-size:.9rem}.btn{border:1px solid var(--line);background:#fff;color:var(--ink);padding:9px 13px;border-radius:9px;font-weight:700;cursor:pointer}.btn:hover{border-color:var(--blue)}
-    .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.card,.panel{background:var(--card);border:1px solid var(--line);border-radius:13px;box-shadow:0 3px 12px rgba(22,43,59,.04)}.card{padding:17px}.label{font-size:.85rem;color:var(--muted)}.value{font-size:1.65rem;font-weight:800;margin-top:5px;letter-spacing:-.04em}.sub{font-size:.78rem;color:var(--muted);margin-top:2px}
-    .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:14px;margin-top:14px}.panel{padding:18px;min-width:0}.panel h2{font-size:1rem;margin:0 0 16px}.bars{display:grid;gap:11px}.bar-row{display:grid;grid-template-columns:88px 1fr 76px;align-items:center;gap:9px;font-size:.86rem}.track{height:10px;background:#edf2f5;border-radius:99px;overflow:hidden}.fill{height:100%;border-radius:99px;background:var(--blue)}.bar-value{text-align:right;font-weight:700}
-    .donut-wrap{display:flex;align-items:center;justify-content:center;gap:28px;min-height:195px}.donut{width:150px;height:150px;border-radius:50%;position:relative;background:conic-gradient(var(--green) 0 33%,var(--red) 33% 66%,#8ea2b2 66%)}.donut:after{content:"대출 상태";position:absolute;inset:29px;background:white;border-radius:50%;display:grid;place-items:center;font-size:.82rem;font-weight:700}.legend{display:grid;gap:9px}.legend div{display:flex;align-items:center;gap:8px;font-size:.86rem}.swatch{width:10px;height:10px;border-radius:3px}
-    .table-panel{margin-top:14px}.table-head{display:flex;justify-content:space-between;align-items:center;gap:12px}.search{width:min(310px,48vw);border:1px solid var(--line);border-radius:9px;padding:9px 12px;font:inherit}.table-wrap{overflow:auto;max-height:340px}table{width:100%;border-collapse:collapse;font-size:.88rem}th,td{padding:11px 10px;border-bottom:1px solid #edf1f4;text-align:left;white-space:nowrap}th{position:sticky;top:0;background:#fff;color:var(--muted);font-size:.78rem}td.num{text-align:right;font-variant-numeric:tabular-nums}.badge{display:inline-block;padding:3px 8px;border-radius:99px;background:#e9f8f3;color:#087b60;font-weight:700;font-size:.76rem}.badge.bad{background:#fff0f0;color:#b4232a}.empty{padding:42px;text-align:center;color:var(--muted)}.error{background:#fff4e5;color:#8b4b00;border:1px solid #ffd8a8;border-radius:10px;padding:12px;margin-bottom:14px;display:none}
-    .skeleton{color:transparent;background:linear-gradient(90deg,#edf1f4,#f8fafb,#edf1f4);background-size:200% 100%;animation:shimmer 1.1s infinite;border-radius:5px}@keyframes shimmer{to{background-position:-200% 0}}
-
-    .conn-panel{background:#fff;border:1px solid var(--line);border-radius:13px;padding:16px 18px;margin-bottom:16px;box-shadow:0 3px 12px rgba(22,43,59,.04)}
-    .conn-grid{display:grid;grid-template-columns:1.2fr 1.2fr auto auto;gap:10px;align-items:end}
-    .field{display:grid;gap:6px}.field label{font-size:.78rem;color:var(--muted);font-weight:700}
-    .field input{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font:inherit;background:#fff;color:var(--ink)}
-    .field input:focus{outline:2px solid rgba(22,119,255,.14);border-color:var(--blue)}
-    .btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}.btn.danger{color:var(--red)}
-    .conn-help{margin-top:9px;color:var(--muted);font-size:.78rem}
-    @media(max-width:760px){header{padding:17px 18px}main{padding:15px}.cards{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}.brand{align-items:flex-start}.toolbar{align-items:flex-start}.bar-row{grid-template-columns:76px 1fr 68px}.donut-wrap{gap:18px}.table-head{align-items:flex-start;flex-direction:column}.search{width:100%}.conn-grid{grid-template-columns:1fr}.conn-grid .btn{width:100%}}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Noto Sans KR",sans-serif}button,input,select{font:inherit}
+    header{background:var(--navy);color:#fff;padding:20px 24px}header .inner,main{max-width:1240px;margin:auto}.brand{display:flex;justify-content:space-between;gap:16px;align-items:center}.brand h1{margin:0;font-size:1.35rem}.status{display:flex;align-items:center;gap:7px;color:#c9e2f2;font-size:.86rem}.dot{width:8px;height:8px;border-radius:50%;background:#8ea2b2}.dot.on{background:#5de1b8}.dot.bad{background:#ff8585}
+    main{padding:22px}.panel,.card{background:#fff;border:1px solid var(--line);border-radius:13px;box-shadow:0 3px 12px rgba(22,43,59,.04)}.panel{padding:18px}.conn{margin-bottom:16px}.conn-grid{display:grid;grid-template-columns:1.15fr 1.15fr auto auto;gap:10px;align-items:end}.field{display:grid;gap:6px}.field label{font-size:.78rem;color:var(--muted);font-weight:700}.field input,.field select,.search{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px;background:#fff;color:var(--ink)}.field input:focus,.field select:focus,.search:focus{outline:2px solid rgba(22,119,255,.14);border-color:var(--blue)}
+    .btn{border:1px solid var(--line);background:#fff;color:var(--ink);padding:9px 13px;border-radius:9px;font-weight:700;cursor:pointer}.btn:hover{border-color:var(--blue)}.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}.btn.green{background:var(--green);border-color:var(--green);color:#fff}.btn.danger{color:var(--red)}.btn.small{padding:6px 9px;font-size:.8rem}.btn:disabled{opacity:.45;cursor:not-allowed}
+    .help{margin-top:9px;color:var(--muted);font-size:.78rem}.warning{margin-top:10px;background:#fff7e8;border:1px solid #ffd591;color:#7a4900;border-radius:9px;padding:9px 11px;font-size:.8rem}.error,.success{display:none;border-radius:10px;padding:11px 12px;margin:0 0 14px}.error{background:#fff0f0;color:#a2262d;border:1px solid #ffc7c7}.success{background:#ecfbf6;color:#087b60;border:1px solid #b5ecdb}
+    .toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}.toolbar p{margin:0;color:var(--muted);font-size:.9rem}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.card{padding:17px}.label{font-size:.85rem;color:var(--muted)}.value{font-size:1.65rem;font-weight:800;margin-top:5px;letter-spacing:-.04em}.sub{font-size:.78rem;color:var(--muted);margin-top:2px}
+    .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:14px;margin-top:14px}.panel h2{font-size:1rem;margin:0 0 16px}.bars{display:grid;gap:11px}.bar-row{display:grid;grid-template-columns:100px 1fr 90px;align-items:center;gap:9px;font-size:.86rem}.track{height:10px;background:#edf2f5;border-radius:99px;overflow:hidden}.fill{height:100%;border-radius:99px;background:var(--blue)}.bar-value{text-align:right;font-weight:700}.donut-wrap{display:flex;align-items:center;justify-content:center;gap:28px;min-height:195px}.donut{width:150px;height:150px;border-radius:50%;position:relative;background:#edf2f5}.donut:after{content:"대출 상태";position:absolute;inset:29px;background:#fff;border-radius:50%;display:grid;place-items:center;font-size:.82rem;font-weight:700}.legend{display:grid;gap:9px}.legend div{display:flex;align-items:center;gap:8px;font-size:.86rem}.swatch{width:10px;height:10px;border-radius:3px}
+    .crud{margin-top:14px}.crud-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}.crud-head h2{margin:0}.crud-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tab{border:1px solid var(--line);background:#fff;padding:8px 12px;border-radius:9px;font-weight:700;cursor:pointer}.tab.active{background:#eaf3ff;border-color:#9ac4ff;color:#095cb7}.search{width:min(330px,48vw)}.count{font-size:.8rem;color:var(--muted)}.table-wrap{overflow:auto;max-height:480px;border:1px solid #edf1f4;border-radius:10px}table{width:100%;border-collapse:collapse;font-size:.86rem}th,td{padding:10px 9px;border-bottom:1px solid #edf1f4;text-align:left;white-space:nowrap}th{position:sticky;top:0;background:#fff;color:var(--muted);font-size:.77rem;z-index:1}td.num{text-align:right;font-variant-numeric:tabular-nums}.badge{display:inline-block;padding:3px 8px;border-radius:99px;background:#e9f8f3;color:#087b60;font-weight:700;font-size:.75rem}.badge.bad{background:#fff0f0;color:#b4232a}.badge.gray{background:#edf2f5;color:#526575}.actions{display:flex;gap:5px}.empty{padding:36px;text-align:center;color:var(--muted)}
+    dialog{border:0;border-radius:14px;padding:0;max-width:680px;width:min(680px,calc(100vw - 28px));box-shadow:0 20px 60px rgba(0,0,0,.22)}dialog::backdrop{background:rgba(11,28,43,.45)}.modal-head{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line)}.modal-head h3{margin:0;font-size:1.05rem}.xbtn{border:0;background:transparent;font-size:1.35rem;cursor:pointer;color:var(--muted)}.modal-body{padding:18px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 18px;border-top:1px solid var(--line)}.loading{opacity:.6;pointer-events:none}
+    @media(max-width:800px){header{padding:17px 18px}main{padding:15px}.conn-grid,.form-grid{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}.brand,.toolbar,.crud-head{align-items:flex-start}.toolbar,.crud-head{flex-direction:column}.search{width:100%}.bar-row{grid-template-columns:85px 1fr 78px}}
   </style>
 </head>
 <body>
-  <header><div class="inner brand"><h1>MG 금융 데이터 대시보드</h1><div class="status"><span class="dot"></span><span id="statusText">DB 연결 중</span></div></div></header>
-  <main>
-    <section class="conn-panel" aria-label="Supabase 연결 설정">
-      <div class="conn-grid">
-        <div class="field">
-          <label for="supabaseUrl">Supabase URL</label>
-          <input id="supabaseUrl" type="url" autocomplete="off" placeholder="https://your-project.supabase.co">
-        </div>
-        <div class="field">
-          <label for="supabaseKey">Supabase Key</label>
-          <input id="supabaseKey" type="password" autocomplete="off" placeholder="Publishable / anon key">
-        </div>
-        <button class="btn primary" id="connectBtn" type="button">연결</button>
-        <button class="btn danger" id="disconnectBtn" type="button">연결 해제</button>
-      </div>
-      <div class="conn-help">입력값은 현재 탭의 세션에만 보관됩니다. 브라우저를 닫으면 사라집니다. Service Role Key는 입력하지 마세요.</div>
-    </section>
-    <div class="toolbar"><p id="updated">데이터를 불러오고 있습니다.</p><button class="btn" id="refresh">새로고침</button></div>
-    <div class="error" id="errorBox"></div>
-    <section class="cards" aria-label="핵심 현황">
-      <article class="card"><div class="label">전체 조합원</div><div class="value skeleton" id="members">000명</div><div class="sub">등록 기준</div></article>
-      <article class="card"><div class="label">예적금 총액</div><div class="value skeleton" id="deposits">000억원</div><div class="sub">계좌 잔액 합계</div></article>
-      <article class="card"><div class="label">대출 잔액</div><div class="value skeleton" id="loans">000억원</div><div class="sub">완제 제외 원금</div></article>
-      <article class="card"><div class="label">연체 대출</div><div class="value skeleton" id="overdue">00건</div><div class="sub">현재 상태 기준</div></article>
-    </section>
-    <section class="grid">
-      <article class="panel"><h2>지점별 예적금 잔액</h2><div class="bars" id="branchBars"><div class="empty">불러오는 중...</div></div></article>
-      <article class="panel"><h2>대출 상태</h2><div class="donut-wrap"><div class="donut" id="loanDonut" aria-label="대출 상태 비율"></div><div class="legend" id="loanLegend"></div></div></article>
-    </section>
-    <section class="panel table-panel">
-      <div class="table-head"><h2>잔액 상위 예적금 계좌</h2><input class="search" id="search" type="search" placeholder="지점·계좌 종류 검색" aria-label="계좌 검색"></div>
-      <div class="table-wrap"><table><thead><tr><th>계좌번호</th><th>지점</th><th>계좌 종류</th><th>개설일</th><th style="text-align:right">잔액</th><th style="text-align:right">금리</th></tr></thead><tbody id="accountRows"></tbody></table></div>
-    </section>
-  </main>
-  <script>
-    let API='';
-    let KEY='';
-    let headers={};
-    let accounts=[];
-
-    const money=n=>new Intl.NumberFormat('ko-KR',{notation:n>=1e8?'compact':'standard',maximumFractionDigits:1}).format(n)+'원';
-    const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-
-    function normalizeApiUrl(input){
-      let url=(input||'').trim().replace(/\/+$/,'');
-      if(!url) throw new Error('Supabase URL을 입력해 주세요.');
-      if(!/^https:\/\/[a-z0-9-]+\.supabase\.co(?:\/rest\/v1)?$/i.test(url)){
-        throw new Error('Supabase URL 형식을 확인해 주세요.');
-      }
-      if(!/\/rest\/v1$/i.test(url)) url += '/rest/v1';
-      return url;
-    }
-
-    function applyConnection(url,key){
-      API=normalizeApiUrl(url);
-      KEY=(key||'').trim();
-      if(!KEY) throw new Error('Supabase Key를 입력해 주세요.');
-      headers={apikey:KEY,Authorization:`Bearer ${KEY}`};
-      sessionStorage.setItem('mg_supabase_url', url.trim());
-      sessionStorage.setItem('mg_supabase_key', KEY);
-    }
-
-    function clearConnection(){
-      API=''; KEY=''; headers={}; accounts=[];
-      sessionStorage.removeItem('mg_supabase_url');
-      sessionStorage.removeItem('mg_supabase_key');
-      document.getElementById('supabaseUrl').value='';
-      document.getElementById('supabaseKey').value='';
-      document.getElementById('statusText').textContent='DB 연결 안 됨';
-      document.getElementById('updated').textContent='Supabase URL과 Key를 입력한 뒤 연결해 주세요.';
-      document.getElementById('accountRows').innerHTML='<tr><td colspan="6" class="empty">DB 연결 후 데이터가 표시됩니다.</td></tr>';
-      document.getElementById('branchBars').innerHTML='<div class="empty">DB 연결 후 데이터가 표시됩니다.</div>';
-      document.getElementById('loanLegend').innerHTML='';
-      document.getElementById('loanDonut').style.background='#edf2f5';
-      ['members','deposits','loans','overdue'].forEach(id=>{
-        const el=document.getElementById(id);
-        el.textContent='-';
-        el.classList.remove('skeleton');
-      });
-      document.getElementById('errorBox').style.display='none';
-    }
-
-    async function get(path){
-      if(!API || !KEY) throw new Error('먼저 Supabase 연결 정보를 입력해 주세요.');
-      const r=await fetch(`${API}/${path}`,{headers});
-      if(!r.ok){
-        let detail='';
-        try{
-          const body=await r.json();
-          detail=body?.message ? ` · ${body.message}` : '';
-        }catch(_){}
-        throw new Error(`데이터 조회 실패 (${r.status})${detail}`);
-      }
-      return r.json();
-    }
-
-    function set(id,text){
-      const el=document.getElementById(id);
-      el.textContent=text;
-      el.classList.remove('skeleton');
-    }
-
-    function renderAccounts(q=''){
-      const term=q.trim().toLowerCase();
-      const rows=accounts
-        .filter(a=>`${a.account_type} ${a.branches?.branch_name}`.toLowerCase().includes(term))
-        .slice(0,30);
-      document.getElementById('accountRows').innerHTML=rows.length
-        ? rows.map(a=>`<tr><td>${esc(a.account_id)}</td><td>${esc(a.branches?.branch_name||'-')}</td><td><span class="badge">${esc(a.account_type)}</span></td><td>${esc(a.open_date)}</td><td class="num">${money(+a.balance)}</td><td class="num">${Number(a.interest_rate).toFixed(2)}%</td></tr>`).join('')
-        : '<tr><td colspan="6" class="empty">검색 결과가 없습니다.</td></tr>';
-    }
-
-    async function load(){
-      const error=document.getElementById('errorBox');
-      error.style.display='none';
-
-      if(!API || !KEY){
-        clearConnection();
-        return;
-      }
-
-      document.getElementById('statusText').textContent='DB 연결 중';
-      try{
-        const [members,deposits,loans,branches]=await Promise.all([
-          get('members?select=member_id'),
-          get('deposit_accounts?select=account_id,branch_id,account_type,open_date,balance,interest_rate,branches(branch_name)&order=balance.desc'),
-          get('loans?select=loan_amount,status'),
-          get('branches?select=branch_id,branch_name')
-        ]);
-
-        accounts=deposits;
-        const depositTotal=deposits.reduce((s,a)=>s+(+a.balance||0),0);
-        const activeLoans=loans.filter(l=>l.status!=='완제');
-        const loanTotal=activeLoans.reduce((s,l)=>s+(+l.loan_amount||0),0);
-        const overdue=loans.filter(l=>l.status==='연체').length;
-
-        set('members',members.length.toLocaleString()+'명');
-        set('deposits',money(depositTotal));
-        set('loans',money(loanTotal));
-        set('overdue',overdue.toLocaleString()+'건');
-
-        const sums=branches
-          .map(b=>({
-            name:b.branch_name,
-            value:deposits.filter(a=>a.branch_id===b.branch_id).reduce((s,a)=>s+(+a.balance||0),0)
-          }))
-          .sort((a,b)=>b.value-a.value);
-        const max=Math.max(...sums.map(x=>x.value),1);
-
-        document.getElementById('branchBars').innerHTML=sums.map(x=>`<div class="bar-row"><span>${esc(x.name)}</span><div class="track"><div class="fill" style="width:${x.value/max*100}%"></div></div><span class="bar-value">${money(x.value)}</span></div>`).join('');
-
-        const colors={정상:'#00a67d',연체:'#e5484d',완제:'#8ea2b2'};
-        const counts={};
-        loans.forEach(l=>counts[l.status]=(counts[l.status]||0)+1);
-        let cursor=0;
-        const total=Math.max(loans.length,1);
-        const stops=Object.entries(counts).map(([k,v])=>{
-          const start=cursor;
-          cursor+=v/total*100;
-          return `${colors[k]||'#1677ff'} ${start}% ${cursor}%`;
-        });
-
-        document.getElementById('loanDonut').style.background=stops.length?`conic-gradient(${stops.join(',')})`:'#edf2f5';
-        document.getElementById('loanLegend').innerHTML=Object.entries(counts).map(([k,v])=>`<div><span class="swatch" style="background:${colors[k]||'#1677ff'}"></span><span>${esc(k)} <strong>${v}건</strong></span></div>`).join('');
-
-        renderAccounts(document.getElementById('search').value);
-        document.getElementById('statusText').textContent='DB 연결됨';
-        document.getElementById('updated').textContent=`최근 갱신 ${new Date().toLocaleString('ko-KR')}`;
-      }catch(e){
-        error.textContent=e.message+' · URL, Key, RLS/권한 설정을 확인해 주세요.';
-        error.style.display='block';
-        document.getElementById('statusText').textContent='연결 확인 필요';
-      }
-    }
-
-    document.getElementById('connectBtn').addEventListener('click',async()=>{
-      const error=document.getElementById('errorBox');
-      try{
-        applyConnection(
-          document.getElementById('supabaseUrl').value,
-          document.getElementById('supabaseKey').value
-        );
-        await load();
-      }catch(e){
-        error.textContent=e.message;
-        error.style.display='block';
-        document.getElementById('statusText').textContent='연결 안 됨';
-      }
-    });
-
-    document.getElementById('disconnectBtn').addEventListener('click',clearConnection);
-    document.getElementById('refresh').addEventListener('click',load);
-    document.getElementById('search').addEventListener('input',e=>renderAccounts(e.target.value));
-
-    const savedUrl=sessionStorage.getItem('mg_supabase_url')||'';
-    const savedKey=sessionStorage.getItem('mg_supabase_key')||'';
-    if(savedUrl && savedKey){
-      document.getElementById('supabaseUrl').value=savedUrl;
-      document.getElementById('supabaseKey').value=savedKey;
-      try{
-        applyConnection(savedUrl,savedKey);
-        load();
-      }catch(_){
-        clearConnection();
-      }
-    }else{
-      clearConnection();
-    }
-  </script>
+<header><div class="inner brand"><h1>MG 금융 데이터 CRUD 대시보드</h1><div class="status"><span class="dot" id="statusDot"></span><span id="statusText">DB 연결 안 됨</span></div></div></header>
+<main>
+  <section class="panel conn">
+    <div class="conn-grid">
+      <div class="field"><label for="supabaseUrl">Supabase URL</label><input id="supabaseUrl" type="url" autocomplete="off" placeholder="https://your-project.supabase.co"></div>
+      <div class="field"><label for="supabaseKey">Supabase Publishable / anon Key</label><input id="supabaseKey" type="password" autocomplete="off" placeholder="sb_publishable_... 또는 anon key"></div>
+      <button class="btn primary" id="connectBtn" type="button">연결</button><button class="btn danger" id="disconnectBtn" type="button">연결 해제</button>
+    </div>
+    <div class="help">입력값은 현재 탭의 sessionStorage에만 저장됩니다. Service Role / Secret Key는 브라우저에 입력하지 마세요.</div>
+    <div class="warning">⚠ 추가·수정·삭제는 Supabase의 GRANT/RLS 정책이 허용하는 범위에서 동작합니다. 공개 배포용이라면 인증과 RLS를 반드시 적용하세요.</div>
+  </section>
+  <div class="error" id="errorBox"></div><div class="success" id="successBox"></div>
+  <div class="toolbar"><p id="updated">Supabase URL과 Key를 입력한 뒤 연결해 주세요.</p><button class="btn" id="refresh" type="button">전체 새로고침</button></div>
+  <section class="cards">
+    <article class="card"><div class="label">전체 조합원</div><div class="value" id="members">-</div><div class="sub">등록 기준</div></article>
+    <article class="card"><div class="label">예적금 총액</div><div class="value" id="deposits">-</div><div class="sub">계좌 잔액 합계</div></article>
+    <article class="card"><div class="label">대출 잔액</div><div class="value" id="loans">-</div><div class="sub">완제 제외 원금</div></article>
+    <article class="card"><div class="label">연체 대출</div><div class="value" id="overdue">-</div><div class="sub">현재 상태 기준</div></article>
+  </section>
+  <section class="grid">
+    <article class="panel"><h2>지점별 예적금 잔액</h2><div class="bars" id="branchBars"><div class="empty">DB 연결 후 표시됩니다.</div></div></article>
+    <article class="panel"><h2>대출 상태</h2><div class="donut-wrap"><div class="donut" id="loanDonut"></div><div class="legend" id="loanLegend"></div></div></article>
+  </section>
+  <section class="panel crud">
+    <div class="crud-head"><div><h2>데이터 관리</h2><div class="count" id="recordCount">0건</div></div><div class="crud-tools"><input class="search" id="crudSearch" type="search" placeholder="현재 탭 검색"><button class="btn green" id="addBtn" type="button">+ 새 데이터</button></div></div>
+    <div class="tabs"><button class="tab active" data-tab="members">조합원</button><button class="tab" data-tab="deposit_accounts">예적금 계좌</button><button class="tab" data-tab="loans">대출</button><button class="tab" data-tab="branches">지점</button></div>
+    <div class="table-wrap"><table><thead id="crudHead"></thead><tbody id="crudBody"><tr><td class="empty">DB 연결 후 데이터가 표시됩니다.</td></tr></tbody></table></div>
+  </section>
+</main>
+<dialog id="editDialog"><div class="modal-head"><h3 id="modalTitle">데이터 추가</h3><button class="xbtn" id="closeModal" type="button">×</button></div><form id="editForm"><div class="modal-body"><div class="form-grid" id="formFields"></div></div><div class="modal-foot"><button class="btn" id="cancelModal" type="button">취소</button><button class="btn primary" id="saveBtn" type="submit">저장</button></div></form></dialog>
+<script>
+let API='',KEY='',headers={},currentTab='members',editMode='create',editingId=null;
+const state={members:[],deposit_accounts:[],loans:[],branches:[]};
+const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));const money=n=>new Intl.NumberFormat('ko-KR').format(Number(n)||0)+'원';const rate=n=>Number(n||0).toFixed(2)+'%';const today=()=>new Date().toLocaleDateString('en-CA');
+const cfg={
+ members:{id:'member_id',label:'조합원',columns:[['member_id','ID'],['name','이름'],['birth_date','생년월일'],['gender','성별'],['join_date','가입일'],['branch_name','지점'],['phone','전화번호']],fields:[{n:'name',l:'이름',t:'text'},{n:'birth_date',l:'생년월일',t:'date'},{n:'gender',l:'성별',t:'select',o:[['F','여성(F)'],['M','남성(M)']]},{n:'join_date',l:'가입일',t:'date',d:today},{n:'branch_id',l:'지점',t:'branch'},{n:'phone',l:'전화번호',t:'tel'}]},
+ deposit_accounts:{id:'account_id',label:'예적금 계좌',columns:[['account_id','계좌 ID'],['member_name','조합원'],['branch_name','지점'],['account_type','계좌 종류'],['open_date','개설일'],['balance','잔액'],['interest_rate','금리']],fields:[{n:'member_id',l:'조합원',t:'member'},{n:'branch_id',l:'지점',t:'branch'},{n:'account_type',l:'계좌 종류',t:'select',o:[['보통예금','보통예금'],['정기예금','정기예금'],['정기적금','정기적금'],['자유적금','자유적금']]},{n:'open_date',l:'개설일',t:'date',d:today},{n:'balance',l:'잔액(원)',t:'number'},{n:'interest_rate',l:'금리(%)',t:'number'}]},
+ loans:{id:'loan_id',label:'대출',columns:[['loan_id','대출 ID'],['member_name','조합원'],['branch_name','지점'],['loan_type','대출 종류'],['loan_amount','대출금액'],['interest_rate','금리'],['start_date','시작일'],['due_date','만기일'],['status','상태']],fields:[{n:'member_id',l:'조합원',t:'member'},{n:'branch_id',l:'지점',t:'branch'},{n:'loan_type',l:'대출 종류',t:'text'},{n:'loan_amount',l:'대출금액(원)',t:'number'},{n:'interest_rate',l:'금리(%)',t:'number'},{n:'start_date',l:'시작일',t:'date',d:today},{n:'due_date',l:'만기일',t:'date'},{n:'status',l:'상태',t:'select',o:[['정상','정상'],['연체','연체'],['완제','완제']]}]},
+ branches:{id:'branch_id',label:'지점',columns:[['branch_id','지점 ID'],['branch_name','지점명'],['region','지역'],['manager_name','담당자']],fields:[{n:'branch_name',l:'지점명',t:'text'},{n:'region',l:'지역',t:'text'},{n:'manager_name',l:'담당자',t:'text'}]}
+};
+function msg(type,text){$('errorBox').style.display=type==='error'?'block':'none';$('successBox').style.display=type==='success'?'block':'none';if(type==='error')$('errorBox').textContent=text;if(type==='success')$('successBox').textContent=text}function status(text,mode='off'){$('statusText').textContent=text;$('statusDot').className='dot'+(mode==='on'?' on':mode==='bad'?' bad':'')}
+function normUrl(v){let u=(v||'').trim().replace(/\/+$/,'');if(!u)throw Error('Supabase URL을 입력해 주세요.');if(!/^https:\/\/[a-z0-9-]+\.supabase\.co(?:\/rest\/v1)?$/i.test(u))throw Error('Supabase URL 형식을 확인해 주세요.');return /\/rest\/v1$/i.test(u)?u:u+'/rest/v1'}
+function connect(url,key){API=normUrl(url);KEY=(key||'').trim();if(!KEY)throw Error('Supabase Key를 입력해 주세요.');headers={apikey:KEY,Authorization:`Bearer ${KEY}`};sessionStorage.setItem('mg_supabase_url',url.trim());sessionStorage.setItem('mg_supabase_key',KEY)}
+async function api(path,opt={}){if(!API||!KEY)throw Error('먼저 Supabase에 연결해 주세요.');const r=await fetch(`${API}/${path}`,{...opt,headers:{...headers,...(opt.headers||{})}});if(!r.ok){let d='';try{const b=await r.json();d=b.message||b.hint||b.details||''}catch(_){try{d=await r.text()}catch(__){}}throw Error(`요청 실패 (${r.status})${d?' · '+d:''}`)}if(r.status===204)return null;const t=await r.text();return t?JSON.parse(t):null}
+async function nextId(table,id){const r=await api(`${table}?select=${id}&order=${id}.desc&limit=1`);return r?.length?Number(r[0][id])+1:1}
+function bname(id){return state.branches.find(x=>Number(x.branch_id)===Number(id))?.branch_name||'-'}function mname(id){return state.members.find(x=>Number(x.member_id)===Number(id))?.name||'-'}
+async function loadAll(){if(!API)return;document.body.classList.add('loading');msg('none','');status('DB 연결 중');try{const [m,a,l,b]=await Promise.all([api('members?select=*&order=member_id.asc'),api('deposit_accounts?select=*&order=account_id.asc'),api('loans?select=*&order=loan_id.asc'),api('branches?select=*&order=branch_id.asc')]);state.members=m||[];state.deposit_accounts=a||[];state.loans=l||[];state.branches=b||[];renderSummary();renderCrud();status('DB 연결됨','on');$('updated').textContent=`최근 갱신 ${new Date().toLocaleString('ko-KR')}`}catch(e){status('연결 확인 필요','bad');msg('error',e.message+' · URL, Key, GRANT/RLS 정책을 확인해 주세요.')}finally{document.body.classList.remove('loading')}}
+function renderSummary(){const dep=state.deposit_accounts,lo=state.loans;$('members').textContent=state.members.length+'명';$('deposits').textContent=money(dep.reduce((s,x)=>s+(+x.balance||0),0));$('loans').textContent=money(lo.filter(x=>x.status!=='완제').reduce((s,x)=>s+(+x.loan_amount||0),0));$('overdue').textContent=lo.filter(x=>x.status==='연체').length+'건';const sums=state.branches.map(b=>({n:b.branch_name,v:dep.filter(a=>+a.branch_id===+b.branch_id).reduce((s,a)=>s+(+a.balance||0),0)})).sort((a,b)=>b.v-a.v),max=Math.max(...sums.map(x=>x.v),1);$('branchBars').innerHTML=sums.length?sums.map(x=>`<div class="bar-row"><span>${esc(x.n)}</span><div class="track"><div class="fill" style="width:${x.v/max*100}%"></div></div><span class="bar-value">${money(x.v)}</span></div>`).join(''):'<div class="empty">지점 데이터가 없습니다.</div>';const colors={정상:'#00a67d',연체:'#e5484d',완제:'#8ea2b2'},counts={};lo.forEach(x=>counts[x.status]=(counts[x.status]||0)+1);let cur=0,total=Math.max(lo.length,1);const stops=Object.entries(counts).map(([k,v])=>{const s=cur;cur+=v/total*100;return `${colors[k]||'#1677ff'} ${s}% ${cur}%`});$('loanDonut').style.background=stops.length?`conic-gradient(${stops.join(',')})`:'#edf2f5';$('loanLegend').innerHTML=Object.entries(counts).map(([k,v])=>`<div><span class="swatch" style="background:${colors[k]||'#1677ff'}"></span><span>${esc(k)} <strong>${v}건</strong></span></div>`).join('')}
+function rows(){if(currentTab==='members')return state.members.map(x=>({...x,branch_name:bname(x.branch_id)}));if(currentTab==='deposit_accounts')return state.deposit_accounts.map(x=>({...x,member_name:mname(x.member_id),branch_name:bname(x.branch_id)}));if(currentTab==='loans')return state.loans.map(x=>({...x,member_name:mname(x.member_id),branch_name:bname(x.branch_id)}));return state.branches}
+function val(k,v){if(['balance','loan_amount'].includes(k))return money(v);if(k==='interest_rate')return rate(v);if(k==='gender')return v==='F'?'여성':v==='M'?'남성':esc(v);if(k==='status')return `<span class="badge ${v==='연체'?'bad':v==='완제'?'gray':''}">${esc(v)}</span>`;if(k==='account_type')return `<span class="badge">${esc(v)}</span>`;return esc(v??'-')}
+function renderCrud(){const c=cfg[currentTab];$('crudHead').innerHTML='<tr>'+c.columns.map(x=>`<th>${x[1]}</th>`).join('')+'<th>작업</th></tr>';let r=rows();const q=$('crudSearch').value.trim().toLowerCase();if(q)r=r.filter(x=>Object.values(x).some(v=>String(v??'').toLowerCase().includes(q)));$('recordCount').textContent=r.length+'건';if(!API){$('crudBody').innerHTML=`<tr><td colspan="${c.columns.length+1}" class="empty">DB 연결 후 데이터가 표시됩니다.</td></tr>`;return}if(!r.length){$('crudBody').innerHTML=`<tr><td colspan="${c.columns.length+1}" class="empty">데이터가 없습니다.</td></tr>`;return}$('crudBody').innerHTML=r.map(x=>`<tr>${c.columns.map(([k])=>`<td class="${['balance','loan_amount','interest_rate'].includes(k)?'num':''}">${val(k,x[k])}</td>`).join('')}<td><div class="actions"><button class="btn small" data-a="edit" data-id="${x[c.id]}">수정</button><button class="btn small danger" data-a="delete" data-id="${x[c.id]}">삭제</button></div></td></tr>`).join('')}
+function opts(list,v){return '<option value="">선택</option>'+list.map(([x,l])=>`<option value="${esc(x)}" ${String(x)===String(v)?'selected':''}>${esc(l)}</option>`).join('')}
+function field(f,v){const value=(v!==undefined&&v!==null&&v!=='')?v:(typeof f.d==='function'?f.d():'');let h='';if(f.t==='select')h=`<select id="f_${f.n}" name="${f.n}" required>${opts(f.o,value)}</select>`;else if(f.t==='branch')h=`<select id="f_${f.n}" name="${f.n}" required>${opts(state.branches.map(b=>[b.branch_id,`${b.branch_name} (${b.region})`]),value)}</select>`;else if(f.t==='member')h=`<select id="f_${f.n}" name="${f.n}" required>${opts(state.members.map(m=>[m.member_id,`${m.name} (#${m.member_id})`]),value)}</select>`;else h=`<input id="f_${f.n}" name="${f.n}" type="${f.t}" value="${esc(value)}" ${f.t==='number'?'min="0" step="0.01"':''} required>`;return `<div class="field"><label for="f_${f.n}">${f.l}</label>${h}</div>`}
+function openModal(mode,id=null){if(!API){msg('error','먼저 Supabase에 연결해 주세요.');return}editMode=mode;editingId=id;const c=cfg[currentTab],src=state[currentTab].find(x=>String(x[c.id])===String(id))||{};$('modalTitle').textContent=mode==='create'?`${c.label} 추가`:`${c.label} 수정 · #${id}`;$('formFields').innerHTML=c.fields.map(f=>field(f,src[f.n])).join('');const m=$('f_member_id');if(m&&['deposit_accounts','loans'].includes(currentTab))m.addEventListener('change',()=>{const mm=state.members.find(x=>String(x.member_id)===m.value);if(mm&&$('f_branch_id'))$('f_branch_id').value=String(mm.branch_id)});$('editDialog').showModal()}
+function payload(){const d={};for(const f of cfg[currentTab].fields){let v=$(`f_${f.n}`).value;if(['number','branch','member'].includes(f.t))v=Number(v);d[f.n]=v}if(['deposit_accounts','loans'].includes(currentTab)&&d.member_id){const m=state.members.find(x=>+x.member_id===+d.member_id);if(m)d.branch_id=+m.branch_id}return d}
+async function save(e){e.preventDefault();const c=cfg[currentTab],d=payload();$('saveBtn').disabled=true;try{if(editMode==='create'){d[c.id]=await nextId(currentTab,c.id);await api(currentTab,{method:'POST',headers:{'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(d)});msg('success',`${c.label} 데이터가 추가되었습니다.`)}else{await api(`${currentTab}?${c.id}=eq.${encodeURIComponent(editingId)}`,{method:'PATCH',headers:{'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(d)});msg('success',`${c.label} 데이터가 수정되었습니다.`)}$('editDialog').close();await loadAll()}catch(e2){msg('error',e2.message)}finally{$('saveBtn').disabled=false}}
+async function del(id){const c=cfg[currentTab];if(!confirm(`#${id} ${c.label} 데이터를 삭제하시겠습니까?\n연결된 데이터가 있으면 삭제가 실패할 수 있습니다.`))return;try{await api(`${currentTab}?${c.id}=eq.${encodeURIComponent(id)}`,{method:'DELETE',headers:{'Prefer':'return=representation'}});msg('success',`${c.label} 데이터가 삭제되었습니다.`);await loadAll()}catch(e){msg('error',e.message+' · 연결된 데이터가 있다면 해당 데이터를 먼저 삭제해 주세요.')}}
+function disconnect(){API='';KEY='';headers={};Object.keys(state).forEach(k=>state[k]=[]);sessionStorage.removeItem('mg_supabase_url');sessionStorage.removeItem('mg_supabase_key');$('supabaseUrl').value='';$('supabaseKey').value='';status('DB 연결 안 됨');$('updated').textContent='Supabase URL과 Key를 입력한 뒤 연결해 주세요.';['members','deposits','loans','overdue'].forEach(id=>$(id).textContent='-');$('branchBars').innerHTML='<div class="empty">DB 연결 후 표시됩니다.</div>';$('loanLegend').innerHTML='';$('loanDonut').style.background='#edf2f5';renderCrud();msg('none','')}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');currentTab=b.dataset.tab;$('crudSearch').value='';renderCrud()}));$('crudSearch').addEventListener('input',renderCrud);$('addBtn').addEventListener('click',()=>openModal('create'));$('crudBody').addEventListener('click',e=>{const b=e.target.closest('button[data-a]');if(!b)return;b.dataset.a==='edit'?openModal('edit',b.dataset.id):del(b.dataset.id)});$('editForm').addEventListener('submit',save);$('closeModal').onclick=()=>$('editDialog').close();$('cancelModal').onclick=()=>$('editDialog').close();$('refresh').onclick=loadAll;$('disconnectBtn').onclick=disconnect;$('connectBtn').onclick=async()=>{try{connect($('supabaseUrl').value,$('supabaseKey').value);await loadAll()}catch(e){status('연결 안 됨','bad');msg('error',e.message)}};
+const su=sessionStorage.getItem('mg_supabase_url')||'',sk=sessionStorage.getItem('mg_supabase_key')||'';if(su&&sk){$('supabaseUrl').value=su;$('supabaseKey').value=sk;try{connect(su,sk);loadAll()}catch(_){disconnect()}}else disconnect();
+</script>
 </body>
 </html>
